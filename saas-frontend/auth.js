@@ -42,6 +42,7 @@ function isPasswordSetupLink() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   return ["invite", "recovery", "signup"].includes(params.get("type")) ||
     ["invite", "recovery", "signup"].includes(hash.get("type")) ||
+    params.has("code") ||
     window.location.hash.includes("type=recovery") ||
     window.location.hash.includes("type=invite");
 }
@@ -151,7 +152,13 @@ if (!configured) {
   });
 
   supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && event !== "PASSWORD_RECOVERY" && !isPasswordSetupLink()) {
+    if (session?.user && (event === "PASSWORD_RECOVERY" || isPasswordSetupLink())) {
+      showGate();
+      loginForm.classList.add("hidden");
+      forgotButton.classList.add("hidden");
+      setPasswordForm.classList.remove("hidden");
+      showMessage("Invitation or password reset link verified. Please set your password.");
+    } else if (session?.user) {
       showWorkspace(session.user);
     } else if (!session) {
       showGate();
