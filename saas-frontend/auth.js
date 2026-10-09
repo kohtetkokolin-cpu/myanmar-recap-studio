@@ -47,6 +47,8 @@ function isPasswordSetupLink() {
     window.location.hash.includes("type=invite");
 }
 
+const passwordSetupLinkAtLoad = isPasswordSetupLink();
+
 if (!configured) {
   showGate();
   showMessage("Setup required: add your Supabase Project URL and Publishable key in saas-frontend/supabase-config.js, then deploy this preview branch.", "error");
@@ -65,7 +67,7 @@ if (!configured) {
       return;
     }
     if (data.session?.user) {
-      if (isPasswordSetupLink()) {
+      if (passwordSetupLinkAtLoad || isPasswordSetupLink()) {
         showGate();
         loginForm.classList.add("hidden");
         forgotButton.classList.add("hidden");
@@ -152,7 +154,7 @@ if (!configured) {
   });
 
   supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user && (event === "PASSWORD_RECOVERY" || isPasswordSetupLink())) {
+    if (session?.user && (event === "PASSWORD_RECOVERY" || passwordSetupLinkAtLoad || isPasswordSetupLink())) {
       showGate();
       loginForm.classList.add("hidden");
       forgotButton.classList.add("hidden");
