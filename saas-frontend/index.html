@@ -8,7 +8,32 @@
   <title>Myanmar Recap Studio — Workspace</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body class="auth-pending">
+  <section id="authGate" class="auth-gate" aria-labelledby="authTitle">
+    <div class="auth-card">
+      <a class="auth-brand" href="#" aria-label="Myanmar Recap Studio"><span class="brand-mark">M<span>R</span></span><span class="brand-copy"><strong>MYANMAR RECAP</strong><small>STUDIO</small></span></a>
+      <div class="eyebrow"><span class="gold-line"></span> PRIVATE WORKSPACE</div>
+      <h1 id="authTitle">Welcome back<span class="gold-period">.</span></h1>
+      <p class="auth-subtitle">Sign in with the email address used for your invitation.</p>
+      <form id="loginForm" class="auth-form">
+        <label for="loginEmail">Email address</label>
+        <input id="loginEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Your password">
+        <button class="primary-button full-width" type="submit" id="loginButton">Sign in <span>→</span></button>
+      </form>
+      <button id="forgotPasswordButton" class="auth-link" type="button">Forgot password?</button>
+      <form id="setPasswordForm" class="auth-form hidden">
+        <label for="newPassword">Set a new password</label>
+        <input id="newPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="At least 8 characters">
+        <label for="confirmPassword">Confirm new password</label>
+        <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" required placeholder="Repeat your password">
+        <button class="primary-button full-width" type="submit">Save password <span>→</span></button>
+      </form>
+      <p id="authMessage" class="auth-message" role="status" aria-live="polite">Checking authentication setup…</p>
+      <p class="auth-footnote">Access is invitation-only. Public sign-up is not available.</p>
+    </div>
+  </section>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#" aria-label="Myanmar Recap Studio home">
@@ -48,6 +73,7 @@
         <div class="top-actions">
           <span class="invite-status"><span class="status-dot"></span> Invite-only access</span>
           <button class="icon-button" id="helpButton" aria-label="Help">?</button>
+          <button class="sign-out-button" id="logoutButton" type="button">Sign out</button>
           <button class="avatar top-avatar" id="topProfile" aria-label="Account">HK</button>
         </div>
       </header>
@@ -128,6 +154,8 @@
     </section>
   </div>
   <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+  <script src="./supabase-config.js"></script>
   <script src="./app.js"></script>
+  <script type="module" src="./auth.js"></script>
 </body>
 </html>
