@@ -14,6 +14,7 @@ const loginForm = document.getElementById("loginForm");
 const setPasswordForm = document.getElementById("setPasswordForm");
 const forgotButton = document.getElementById("forgotPasswordButton");
 const logoutButton = document.getElementById("logoutButton");
+const adminNavItem = document.getElementById("adminNavItem");
 let supabase = null;
 
 function showMessage(text, kind = "") {
@@ -24,9 +25,19 @@ function showGate() {
   document.body.classList.add("auth-pending");
   gate.style.display = "";
 }
-function showWorkspace(user) {
+function clearRoleUI() {
+  delete document.body.dataset.role;
+  adminNavItem?.classList.add("hidden");
+  const roleLabel = document.getElementById("accountRoleLabel");
+  if (roleLabel) roleLabel.textContent = "Private account";
+}
+function showWorkspace(user, role) {
+  document.body.dataset.role = role;
   document.body.classList.remove("auth-pending");
   gate.style.display = "none";
+  adminNavItem?.classList.toggle("hidden", role !== "admin");
+  const roleLabel = document.getElementById("accountRoleLabel");
+  if (roleLabel) roleLabel.textContent = role === "admin" ? "Administrator" : "Member";
   if (user?.email) {
     const profile = document.querySelector(".profile-copy strong");
     const topProfile = document.getElementById("topProfile");
@@ -36,6 +47,30 @@ function showWorkspace(user) {
     if (topProfile) topProfile.textContent = initials;
     if (avatar) avatar.textContent = initials;
   }
+}
+async function enterWorkspace(user) {
+  if (!supabase || !user) return;
+  showGate();
+  showMessage("Checking account permissions…");
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    clearRoleUI();
+    showGate();
+    showMessage("Could not verify your account role. Check the user_roles table and its RLS policy, then contact the admin. " + error.message, "error");
+    return;
+  }
+  if (!data || !["admin", "user"].includes(data.role)) {
+    clearRoleUI();
+    showGate();
+    showMessage("This account has no valid workspace role. Please contact the admin.", "error");
+    return;
+  }
+  showWorkspace(user, data.role);
 }
 function isPasswordSetupLink() {
   const params = new URLSearchParams(window.location.search);
@@ -74,9 +109,10 @@ if (!configured) {
         setPasswordForm.classList.remove("hidden");
         showMessage("Invitation or password reset link verified. Please set your password.");
       } else {
-        showWorkspace(data.session.user);
+        await enterWorkspace(data.session.user);
       }
     } else {
+      clearRoleUI();
       showGate();
       showMessage("Sign in with the email address used for your invitation.");
     }
@@ -95,10 +131,7 @@ if (!configured) {
       showMessage("Sign-in failed. Check your email/password and confirm this account was invited by the admin. " + error.message, "error");
       return;
     }
-    if (data.session?.user) {
-      showWorkspace(data.session.user);
-      showMessage("Signed in successfully.", "success");
-    }
+    if (data.session?.user) await enterWorkspace(data.session.user);
   });
 
   forgotButton.addEventListener("click", async () => {
@@ -138,6 +171,7 @@ if (!configured) {
     forgotButton.classList.remove("hidden");
     setPasswordForm.classList.add("hidden");
     await supabase.auth.signOut();
+    clearRoleUI();
     showGate();
     showMessage("Password saved. You can now sign in.", "success");
   });
@@ -148,6 +182,7 @@ if (!configured) {
       showMessage("Sign out failed: " + error.message, "error");
       return;
     }
+    clearRoleUI();
     loginForm.reset();
     showGate();
     showMessage("You have signed out.");
@@ -161,8 +196,9 @@ if (!configured) {
       setPasswordForm.classList.remove("hidden");
       showMessage("Invitation or password reset link verified. Please set your password.");
     } else if (session?.user) {
-      showWorkspace(session.user);
+      window.setTimeout(() => enterWorkspace(session.user), 0);
     } else if (!session) {
+      clearRoleUI();
       showGate();
     }
   });
