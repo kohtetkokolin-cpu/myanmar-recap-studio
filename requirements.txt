@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-multipart
+edge-tts
+google-genai
+yt-dlp
+curl-cffi
+apscheduler
+httpx
+pyyaml
+Pillow
+gradio-client
+scenedetect[opencv]==0.6.4
+faster-whisper==1.0.3

@@ -1,0 +1,10 @@
+Padauk.ttf filter=lfs diff=lfs merge=lfs -text
+__pycache__/main.cpython-311.pyc filter=lfs diff=lfs merge=lfs -text
+fonts/AJ[[:space:]]27[[:space:]]Regular.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/MyanmarKyaungChee.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/MyanmarTagaung.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/MyanmarTaunggyi.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/MyanmarTextMelano.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/Phantee[[:space:]]Hand[[:space:]]Written.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/Sabel.ttf filter=lfs diff=lfs merge=lfs -text
+fonts/သစ္စာရွှေစည်.ttf filter=lfs diff=lfs merge=lfs -text
