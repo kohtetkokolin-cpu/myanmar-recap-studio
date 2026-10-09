@@ -15,7 +15,8 @@
     "Create Recap": "Prepare a new movie recap project.",
     "Render Queue": "Track video jobs and their processing status.",
     "Usage & Plan": "Review usage limits and your workspace plan.",
-    "Settings": "Manage workspace preferences and account settings."
+    "Settings": "Manage workspace preferences and account settings.",
+    "Admin Panel": "Manage workspace access and review system settings. Administrative actions must be verified by a secured backend API."
   };
 
   function showToast(message) {
@@ -33,6 +34,10 @@
     backdrop.classList.add("hidden");
   }
   function goToPage(page) {
+    if (page === "Admin Panel" && document.body.dataset.role !== "admin") {
+      showToast("Admin access is required for this page.");
+      return;
+    }
     document.querySelectorAll(".nav-item").forEach((button) => {
       button.classList.toggle("active", button.dataset.page === page);
     });
@@ -51,6 +56,9 @@
     placeholder.classList.remove("hidden");
     placeholderTitle.textContent = page;
     placeholderText.textContent = pageCopy[page] || "This page will be connected in a later implementation step.";
+    if (page === "Admin Panel") {
+      placeholderText.textContent = "Admin-only preview. User management and privileged actions must be implemented through a secured server API.";
+    }
   }
 
   document.querySelectorAll("[data-page]").forEach((button) => {
