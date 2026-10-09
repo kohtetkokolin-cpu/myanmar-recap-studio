@@ -1,0 +1,7 @@
+-- Myanmar Recap Studio: authentication setup notes
+-- Public sign-up must be disabled in Supabase Authentication settings.
+-- Invite users manually from Supabase Dashboard > Authentication > Users > Invite user.
+-- This initial stage uses Supabase Auth only; projects, roles, and billing tables are not added yet.
+--
+-- Important: do not put a Supabase secret/service_role key in browser code.
+-- Do not rely on hiding the dashboard as the only authorization for future APIs.
