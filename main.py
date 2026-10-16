@@ -20,6 +20,65 @@ from google import genai
 from google.genai import types as genai_types
 from typing import Optional
 
+# ── Optional additive v2 modules (safe to be absent) ─────────────────────
+try:
+    import movie_index
+except Exception as _e:  # noqa: BLE001
+    movie_index = None
+    print(f"[STARTUP] movie_index unavailable: {_e}")
+try:
+    import media_utils
+except Exception as _e:  # noqa: BLE001
+    media_utils = None
+    print(f"[STARTUP] media_utils unavailable: {_e}")
+try:
+    import fair_use
+except Exception as _e:  # noqa: BLE001
+    fair_use = None
+    print(f"[STARTUP] fair_use unavailable: {_e}")
+try:
+    import styles_config
+except Exception as _e:  # noqa: BLE001
+    styles_config = None
+    print(f"[STARTUP] styles_config unavailable: {_e}")
+try:
+    import script_cache
+except Exception as _e:  # noqa: BLE001
+    script_cache = None
+    print(f"[STARTUP] script_cache unavailable: {_e}")
+
+# Hardware H.264 encoding is opt-in (default off = byte-identical to before).
+_HW_ENCODE = str(os.environ.get("MRS_HW_ENCODE", "")).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _pick_h264(cpu_args, crf=23, quality="balanced"):
+    """Return `cpu_args` unchanged unless MRS_HW_ENCODE is on (then use the GPU)."""
+    if _HW_ENCODE and media_utils is not None:
+        try:
+            return media_utils.h264_encode_args(crf=crf, quality=quality)
+        except Exception:
+            pass
+    return list(cpu_args)
+
+
+_story_styles_patched = False
+
+
+def _ensure_story_styles():
+    """Lazily apply styles.yaml story overrides to story_engine.STYLES (no-op if absent)."""
+    global _story_styles_patched
+    if _story_styles_patched:
+        return
+    _story_styles_patched = True
+    if styles_config is None:
+        return
+    try:
+        import story_engine as _se
+        _se.STYLES = styles_config.apply_story_overrides(_se.STYLES)
+    except Exception:
+        pass
+
+
 app = FastAPI(title="Transcript Master AI Engine", docs_url=None, redoc_url=None, openapi_url=None)
 
 # ── Basic per-IP rate limiting ───────────────────────────────────────────
@@ -804,6 +863,12 @@ RECAP_STYLE_FEATURED = {
     "emotional", "thriller_suspense", "action", "plot_explainer",
     "dialogue_cinematic", "dialogue_banter", "visual_hook", "short_drama_translation"
 }
+# v2: styles.yaml may override / add / remove recap styles (no-op if the file is absent).
+if styles_config is not None:
+    try:
+        RECAP_STYLES = styles_config.apply_recap_overrides(RECAP_STYLES)
+    except Exception as _e:  # noqa: BLE001
+        print(f"[STARTUP] recap style overrides skipped: {_e}")
 
 def _next_gemini_client():
     """Rotate to the next API key. Returns the client."""
@@ -2638,6 +2703,37 @@ def _local_fast_get_whisper():
     return _whisper_model_cache[key]
 
 
+def _index_evidence(local_path):
+    """Return (units, transcript) from a cached Movie Index, or None.
+
+    Reusing the index skips PySceneDetect + ffmpeg audio extract + Whisper,
+    so re-running any mode/style on the same source costs no local analysis.
+    """
+    if movie_index is None:
+        return None
+    try:
+        idx = movie_index.load_index(local_path)
+    except Exception:
+        return None
+    if not idx:
+        return None
+    units = idx.get("units") or []
+    transcript = idx.get("transcript") or []
+    if not units or not transcript:
+        return None
+    return [tuple(u) for u in units], transcript
+
+
+def _save_index_evidence(local_path, units, transcript, shots=None):
+    """Persist freshly computed local evidence so later runs reuse it."""
+    if movie_index is None:
+        return
+    try:
+        movie_index.save_index(local_path, [list(u) for u in units], transcript, shots=shots)
+    except Exception:
+        pass
+
+
 def _five_second_evidence_units(duration_sec, quantum=5.0):
     """Build a deterministic source index: contiguous ~5-second windows.
 
@@ -2788,18 +2884,39 @@ def local_scene_analysis(video_id, part_tag, local_path, temp_dir, target_minute
     spoken narration. No generic narration fallback is ever synthesized.
     """
     log_status(video_id, f"{part_tag}Local scene timeline ကို 5-second source units အဖြစ် တည်ဆောက်နေပါသည်...")
-    beats = _local_fast_detect_beats(local_path, min_beat_sec,
-                                     target_duration_sec=target_minutes * 60.0)
-    if not beats:
-        raise RuntimeError("No source timeline units were detected")
+    _ev = _index_evidence(local_path)
+    if _ev:
+        beats, transcript = _ev
+        log_status(video_id, f"{part_tag}Local-Fast: Movie Index ကို ပြန်သုံးပါသည် (Whisper/scene-detect ကျော်)")
+    else:
+        beats = _local_fast_detect_beats(local_path, min_beat_sec,
+                                         target_duration_sec=target_minutes * 60.0)
+        if not beats:
+            raise RuntimeError("No source timeline units were detected")
 
-    log_status(video_id, f"{part_tag}Dialogue transcript ကို local Whisper ဖြင့် ထုတ်နေပါသည်...")
-    wav_path = os.path.join(temp_dir, "lf_audio.wav")
-    subprocess.run(["ffmpeg", "-y", "-i", local_path, "-ac", "1", "-ar", "16000", wav_path],
-                   check=True, capture_output=True)
-    whisper_model = _local_fast_get_whisper()
-    whisper_segments, _info = whisper_model.transcribe(wav_path, beam_size=1)
-    transcript = [{"start": float(x.start), "end": float(x.end), "text": x.text} for x in whisper_segments]
+        log_status(video_id, f"{part_tag}Dialogue transcript ကို local Whisper ဖြင့် ထုတ်နေပါသည်...")
+        wav_path = os.path.join(temp_dir, "lf_audio.wav")
+        subprocess.run(["ffmpeg", "-y", "-i", local_path, "-ac", "1", "-ar", "16000", wav_path],
+                       check=True, capture_output=True)
+        whisper_model = _local_fast_get_whisper()
+        whisper_segments, _info = whisper_model.transcribe(wav_path, beam_size=1)
+        transcript = [{"start": float(x.start), "end": float(x.end), "text": x.text} for x in whisper_segments]
+        _save_index_evidence(local_path, beats, transcript)
+
+    _sc_key = _sc_sig = None
+    if script_cache is not None:
+        try:
+            _sc_key = script_cache.movie_key(local_path)
+            _sc_sig = script_cache.make_sig(
+                _sc_key, "local_fast", style=recap_style, minutes=target_minutes,
+                words=target_words, ratio=recap_ratio, lang=target_lang,
+                min_beat=min_beat_sec, chunk=chunk_label, prev=(prev_context or "")[-400:])
+            _sc_hit = script_cache.load(_sc_key, _sc_sig)
+            if _sc_hit:
+                log_status(video_id, f"{part_tag}Script cache ပြန်သုံးပါသည် — Gemini ခေါ်မှု ကျော်")
+                return _sc_hit
+        except Exception:
+            _sc_key = _sc_sig = None
 
     def dialogue_for(a, b):
         return " ".join(x["text"].strip() for x in transcript
@@ -3000,6 +3117,11 @@ SOURCE EVIDENCE:
     if failed_chunks:
         log_status(video_id, f"{part_tag}{len(failed_chunks)} story-beat chunk(s) skipped; no filler narration was added.")
     log_status(video_id, f"{part_tag}Meaningful story beats {len(scenes_data)} ခု ရရှိပါပြီ။")
+    if script_cache is not None and _sc_key and _sc_sig:
+        try:
+            script_cache.save(_sc_key, _sc_sig, scenes_data, meta={"engine": "local_fast", "style": recap_style})
+        except Exception:
+            pass
     return scenes_data
 
 
@@ -3014,19 +3136,40 @@ def _ranked_local_scene_analysis(video_id, part_tag, local_path, temp_dir,
     the whole job. The existing renderer consumes the same scenes_data shape.
     """
     log_status(video_id, f"{part_tag}Ranked Local v2: source index နှင့် dialogue ကို local ဖြင့် တည်ဆောက်နေပါသည်...")
-    source_units_raw = _local_fast_detect_beats(local_path, min_beat_sec=12.0,
-                                                target_duration_sec=target_minutes * 60.0)
-    if not source_units_raw:
-        raise RuntimeError("Ranked local source index is empty")
-    wav_path = os.path.join(temp_dir, "ranked_v2_audio.wav")
-    subprocess.run(["ffmpeg", "-y", "-i", local_path, "-ac", "1", "-ar", "16000", wav_path],
-                   check=True, capture_output=True)
-    whisper_model = _local_fast_get_whisper()
-    transcript_segments, _info = whisper_model.transcribe(
-        wav_path, beam_size=1, vad_filter=True, language="my" if str(target_lang).lower() in ("my", "burmese") else None
-    )
-    transcript = [{"start": float(x.start), "end": float(x.end), "text": str(x.text or "").strip()}
-                  for x in transcript_segments if str(x.text or "").strip()]
+    _ev = _index_evidence(local_path)
+    if _ev:
+        source_units_raw, transcript = _ev
+        log_status(video_id, f"{part_tag}Ranked Local v2: Movie Index ကို ပြန်သုံးပါသည် (Whisper/scene-detect ကျော်)")
+    else:
+        source_units_raw = _local_fast_detect_beats(local_path, min_beat_sec=12.0,
+                                                    target_duration_sec=target_minutes * 60.0)
+        if not source_units_raw:
+            raise RuntimeError("Ranked local source index is empty")
+        wav_path = os.path.join(temp_dir, "ranked_v2_audio.wav")
+        subprocess.run(["ffmpeg", "-y", "-i", local_path, "-ac", "1", "-ar", "16000", wav_path],
+                       check=True, capture_output=True)
+        whisper_model = _local_fast_get_whisper()
+        transcript_segments, _info = whisper_model.transcribe(
+            wav_path, beam_size=1, vad_filter=True, language="my" if str(target_lang).lower() in ("my", "burmese") else None
+        )
+        transcript = [{"start": float(x.start), "end": float(x.end), "text": str(x.text or "").strip()}
+                      for x in transcript_segments if str(x.text or "").strip()]
+        _save_index_evidence(local_path, source_units_raw, transcript)
+
+    _sc_key = _sc_sig = None
+    if script_cache is not None:
+        try:
+            _sc_key = script_cache.movie_key(local_path)
+            _sc_sig = script_cache.make_sig(
+                _sc_key, "ranked_local_v2", style=recap_style, minutes=target_minutes,
+                ratio=recap_ratio, lang=target_lang, chunk=chunk_label,
+                prev=(prev_context or "")[-400:])
+            _sc_hit = script_cache.load(_sc_key, _sc_sig)
+            if _sc_hit:
+                log_status(video_id, f"{part_tag}Script cache ပြန်သုံးပါသည် — Gemini ခေါ်မှု ကျော်")
+                return _sc_hit
+        except Exception:
+            _sc_key = _sc_sig = None
 
     units = []
     for i, (a, b) in enumerate(source_units_raw):
@@ -3157,6 +3300,11 @@ EVIDENCE LEDGER:
     if not scenes_data:
         raise RuntimeError("Ranked local produced no evidence-grounded narration")
     log_status(video_id, f"{part_tag}Ranked Local v2: {len(scenes_data)} evidence beats selected; Gemini writer batches bounded.")
+    if script_cache is not None and _sc_key and _sc_sig:
+        try:
+            script_cache.save(_sc_key, _sc_sig, scenes_data, meta={"engine": "ranked_local_v2", "style": recap_style})
+        except Exception:
+            pass
     return scenes_data
 
 def process_video_segment(video_id, local_path, logo_path, font_path, settings,
@@ -4767,7 +4915,7 @@ CURRENT SCENES:
         with open(concat_v,'w') as f:
             for c in clip_list: f.write(f"file '{c}'\n")
 
-        run_cmd(["ffmpeg","-y","-f","concat","-safe","0","-i",concat_v,"-c:v","libx264","-preset","veryfast","-r","30","-vsync","cfr","-t",str(a_dur),"-an", synced], "Concat+Sync (CFR 30fps)", video_id)
+        run_cmd(["ffmpeg","-y","-f","concat","-safe","0","-i",concat_v]+_pick_h264(["-c:v","libx264","-preset","veryfast"], crf=20)+["-r","30","-vsync","cfr","-t",str(a_dur),"-an", synced], "Concat+Sync (CFR 30fps)", video_id)
 
         # ── STEP 5: EFFECTS + SUBTITLES + FINAL RENDER ──────────────
         log_status(video_id, f"{part_tag}Visual Effects နှင့် စာတန်းထိုးများ ထည့်သွင်းနေပါသည်...")
@@ -4863,7 +5011,7 @@ CURRENT SCENES:
         target_bitrate = str(max(800, min(6000, int(pixel_count / 300)))) + "k"
         cmd.extend([
             "-map", f"{audio_idx}:a",
-            "-c:v","libx264","-preset","fast",
+            *_pick_h264(["-c:v","libx264","-preset","fast"], crf=20),
             "-b:v", target_bitrate,
             "-maxrate", f"{int(target_bitrate.replace('k',''))*2}k",
             "-bufsize", f"{int(target_bitrate.replace('k',''))*3}k",
@@ -5579,7 +5727,8 @@ def run_manual_render_job(job_id, video_path, audio_path, manifest, settings):
             fonts_arg = FONTS_DIR.replace("\\", "/").replace(":", "\\:")
             run_cmd(["ffmpeg", "-y", "-i", raw_out, "-vf",
                      f"subtitles='{ass_path.replace(chr(92), '/').replace(':', chr(92) + ':')}':fontsdir='{fonts_arg}'",
-                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-c:a", "copy", out_path],
+                     *_pick_h264(["-c:v", "libx264", "-preset", "veryfast", "-crf", "20"], crf=20),
+                     "-c:a", "copy", out_path],
                     "Manual subtitles", job_id)
         else:
             shutil.copyfile(raw_out, out_path)
@@ -6207,7 +6356,7 @@ def _dv2_render(video_id, local_path, scenes, settings, font_path, temp_dir):
         start = parse_time_to_sec(sc["start_time"])
         run_cmd(["ffmpeg", "-y", "-ss", f"{start:.3f}", "-i", local_path,
                  "-vf", vf_clip + f",tpad=stop_mode=clone:stop_duration={dq + 2:.3f}",
-                 "-frames:v", str(n), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21",
+                 "-frames:v", str(n), "-an"] + _pick_h264(["-c:v", "libx264", "-preset", "veryfast", "-crf", "21"], crf=21) + [
                  "-pix_fmt", "yuv420p", "-r", str(FR), "-video_track_timescale", "90000", clip],
                 f"DV2 clip {i}", video_id)
         infos[i] = {"wav": wav, "clip": clip, "n": n, "dur": dq, "real": real}
@@ -6301,9 +6450,9 @@ def _dv2_render(video_id, local_path, scenes, settings, font_path, temp_dir):
     if filters:
         px = out_w * out_h
         br = max(800, min(6000, int(px / 300)))
-        cmd += ["-filter_complex", ";".join(filters), "-map", f"[{last_v}]",
-                "-c:v", "libx264", "-preset", "fast", "-b:v", f"{br}k", "-maxrate", f"{br * 2}k",
-                "-bufsize", f"{br * 3}k", "-pix_fmt", "yuv420p"]
+        cmd += ["-filter_complex", ";".join(filters), "-map", f"[{last_v}]"]
+        cmd += _pick_h264(["-c:v", "libx264", "-preset", "fast", "-b:v", f"{br}k", "-maxrate", f"{br * 2}k",
+                           "-bufsize", f"{br * 3}k", "-pix_fmt", "yuv420p"], crf=20)
     else:
         cmd += ["-map", "0:v", "-c:v", "copy"]
     cmd += ["-map", "1:a", "-c:a", "aac", "-b:a", "128k", "-t", f"{a_dur:.6f}", "-movflags", "+faststart", final_video]
@@ -6975,7 +7124,7 @@ class _StoryStore:
             n, dq = inf["n"], inf["dur"]
             clip = os.path.join(tmp, f"v{k:04d}.mp4")
             start = parse_time_to_sec(sc["start_time"])
-            enc = ["-frames:v", str(n), "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+            enc = ["-frames:v", str(n), "-an"] + _pick_h264(["-c:v", "libx264", "-preset", "veryfast", "-crf", "22"], crf=22) + [
                    "-pix_fmt", "yuv420p", "-r", str(FR), "-video_track_timescale", "90000", clip]
             if not self.use_graph:
                 tail = f",tpad=stop_mode=clone:stop_duration={dq + 2:.3f}"
@@ -7194,6 +7343,7 @@ def run_story_job(video_id, local_path, font_path, settings):
 
 @app.get("/api/story/styles")
 async def story_styles():
+    _ensure_story_styles()
     if se is None:
         return {"styles": [], "error": "story_engine.py not loaded"}
     return {"styles": se.list_styles()}
@@ -8470,6 +8620,129 @@ def audio_delete(filename: str, _: str = Depends(require_token)):
         os.remove(p)
         return {"ok": True}
     return JSONResponse({"ok": False, "error": "File not found"}, status_code=404)
+
+
+# ==========================================
+# 6. v2 ADDITIVE FEATURES (Movie Index / HW encode / Fair-use)
+# ==========================================
+
+def _resolve_index_source(filename=None, path=None):
+    if path and os.path.isfile(path):
+        return path
+    if filename:
+        safe = os.path.basename(filename)
+        p = os.path.join(DOWNLOAD_DIR, safe)
+        if os.path.isfile(p):
+            return p
+    return None
+
+
+def _index_deps(video_id):
+    """Minimal Gemini deps for building an index (llm_text only)."""
+    class _IndexDeps:
+        def llm_text(self, prompt, schema, label):
+            def _call():
+                c, m = get_gemini_model("recap")
+                cfg = genai_types.GenerateContentConfig(
+                    response_mime_type="application/json", max_output_tokens=16384,
+                    response_schema=schema)
+                return _safe_response_json(c.models.generate_content(model=m, contents=[prompt], config=cfg))
+            return call_gemini_with_retry(_call, video_id=video_id, label=label, max_attempts=4, purpose="recap")
+
+        def log(self, msg):
+            log_status(video_id, msg)
+
+        def progress(self, done, total, label=""):
+            set_job_state(video_id, state="running", part=int(done), total=int(total))
+
+    return _IndexDeps()
+
+
+@app.get("/api/encoders")
+def get_encoders():
+    """Report available hardware H.264 encoders and whether HW encode is on."""
+    if media_utils is None:
+        return {"hw_available": False, "hw_encoders": [], "chosen": "libx264", "enabled": _HW_ENCODE}
+    s = media_utils.summary()
+    s["enabled"] = _HW_ENCODE
+    return s
+
+
+@app.get("/api/fair_use/presets")
+def get_fair_use_presets():
+    if fair_use is None:
+        return {"presets": [], "note": ""}
+    return {"presets": fair_use.list_presets(), "note": fair_use.legal_note()}
+
+
+@app.get("/api/movie_index/list")
+def movie_index_list():
+    if movie_index is None:
+        return {"available": False, "items": []}
+    root = movie_index.DEFAULT_CACHE_ROOT
+    items = []
+    if os.path.isdir(root):
+        for k in sorted(os.listdir(root)):
+            p = os.path.join(root, k, "index.json")
+            if not os.path.isfile(p):
+                continue
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                items.append({
+                    "key": k, "source": os.path.basename(d.get("source", "")),
+                    "duration": d.get("duration"),
+                    "shots": len(d.get("shots", [])),
+                    "segments": len(d.get("transcript", [])),
+                    "detail": d.get("meta", {}).get("detail"),
+                })
+            except Exception:
+                pass
+    return {"available": True, "cache_root": root, "items": items}
+
+
+@app.get("/api/movie_index/status")
+def movie_index_status(filename: str = "", path: str = ""):
+    if movie_index is None:
+        return {"available": False}
+    src = _resolve_index_source(filename, path)
+    if not src:
+        return {"ok": False, "error": "source not found"}
+    idx = movie_index.load_index(src)
+    return {"ok": idx is not None, "cached": idx is not None,
+            "meta": (idx or {}).get("meta", {})}
+
+
+@app.post("/api/movie_index/build")
+async def movie_index_build(
+    background_tasks: BackgroundTasks,
+    filename: str = Form(""),
+    path: str = Form(""),
+    detail: str = Form("local"),
+    rebuild: str = Form("false"),
+    _: str = Depends(require_token),
+):
+    """Build (or rebuild) the reusable Movie Index for a source file."""
+    if movie_index is None:
+        return JSONResponse({"ok": False, "error": "movie_index module not available"}, status_code=503)
+    src = _resolve_index_source(filename, path)
+    if not src:
+        return JSONResponse({"ok": False, "error": "source file not found"}, status_code=404)
+    key = movie_index.cache_key(src)
+    vid = "idx_" + key
+    detail = detail if detail in ("local", "balanced", "deep") else "local"
+    rebuild_b = str(rebuild).lower() in ("1", "true", "yes", "on")
+
+    def _work():
+        deps = _index_deps(vid) if detail != "local" else None
+        try:
+            movie_index.build_index(src, deps=deps, detail=detail, rebuild=rebuild_b)
+        except Exception as e:  # noqa: BLE001
+            log_status(vid, f"Movie Index error: {str(e)[:200]}")
+
+    background_tasks.add_task(_work)
+    return {"ok": True, "key": key, "state": "queued", "detail": detail}
+
 
 if __name__ == "__main__":
     import uvicorn

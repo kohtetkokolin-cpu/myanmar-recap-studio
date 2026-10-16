@@ -558,9 +558,9 @@
                 <p class="text-xs text-slate-400">Auto mode မှာ ၃၀ မိနစ်အထိ video ကို Part မခွဲပါ။ ၁ နာရီ/၂ နာရီ source တွေကို ၃၀ မိနစ်စီ Part ခွဲပြီး Part တစ်ခုချင်းစီကို ၅ မိနစ်စီ Gemini analysis လုပ်ကာ script → TTS → sync render ပြုလုပ်ပါမယ်။</p>
                 <select id="analysisEngine" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
                         onchange="const badge=document.getElementById('analysisEngineBadge'); const mb=document.getElementById('minBeatSecRow'); const isGemini=this.value==='gemini_auto'||this.value==='gemini_video'; if(isGemini){badge.innerText='AI AUTO';badge.className='bg-violet-100 text-violet-700 px-3 py-1 rounded text-xs font-bold';mb.style.display='none';}else{badge.innerText='NO VIDEO AI';badge.className='bg-amber-100 text-amber-700 px-3 py-1 rounded text-xs font-bold';mb.style.display='block';}">
-                    <option value="gemini_auto" selected>🤖 Auto — 30-minute Parts + 5-minute analysis windows</option>
+                    <option value="gemini_auto">🤖 Auto — 30-minute Parts + 5-minute analysis windows</option>
                     <option value="gemini_video">🎥 Gemini Video — legacy single-segment mode</option>
-                    <option value="ranked_local_v2">⚡ Ranked Local v2 — Local evidence + bounded narration AI</option>
+                    <option value="ranked_local_v2" selected>⚡ Ranked Local v2 — Local evidence + bounded narration AI</option>
                     <option value="local_fast">🧪 Legacy Fast Evidence Mode</option>
                 </select>
                 <div id="minBeatSecRow" style="display:none;">
@@ -1083,8 +1083,8 @@
                     <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Analysis Engine</label>
                     <select id="dlAnalysisEngine" class="w-full border p-2 rounded text-xs font-semibold"
                             onchange="document.getElementById('dlMinBeatRow').style.display=this.value==='gemini_video'?'none':'block';">
-                        <option value="gemini_auto" selected>🤖 Auto Gemini — 30-minute Parts / 5-minute analysis</option>
-                        <option value="ranked_local_v2">⚡ Ranked Local v2</option>
+                        <option value="gemini_auto">🤖 Auto Gemini — 30-minute Parts / 5-minute analysis</option>
+                        <option value="ranked_local_v2" selected>⚡ Ranked Local v2</option>
                         <option value="local_fast">🧪 Legacy Story Beat</option>
                         <option value="gemini_video">🎥 Gemini Video — optional legacy mode</option>
                     </select>
@@ -4157,7 +4157,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             // remain grouped in the existing advanced cards instead of being
             // silently removed from the real app UI.
             const engine = document.getElementById('analysisEngine');
-            if (engine) engine.value = 'gemini_auto';
+            if (engine) engine.value = 'ranked_local_v2';
             const budget = document.getElementById('aiBudget');
             if (budget) budget.value = 'local';
             const sync = document.getElementById('syncMode');
