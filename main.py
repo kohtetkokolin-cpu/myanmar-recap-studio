@@ -1183,7 +1183,7 @@ def tts_rate_affects_duration(voice_type, voice_id=None):
     if kind == "new" or str(voice_id or "").startswith("gemini:"):
         return False  # Gemini native audio branch has no rate parameter here.
     if kind == "clone":
-        return False  # voice_clone.generate_speech_long currently ignores rate.
+        return False  # legacy clone backend is not available in this build.
     return True
 
 def probe_media(path):
@@ -1363,18 +1363,7 @@ async def generate_audio_only(text, voice_type, voice_id, audio_path, rate, pitc
             word_timings = await _run_edge_tts(text, v_id, rate_str, pitch_str, audio_path)
 
         elif voice_type == 'clone':
-            import voice_clone
-            profile_id = int(voice_id) if voice_id and voice_id.isdigit() else 0
-            if not profile_id:
-                raise Exception("Voice clone profile not found")
-            profile = voice_clone.get_profile(profile_id)
-            if not profile:
-                raise Exception(f"Voice profile {profile_id} not found")
-            def _run_clone():
-                audio_bytes, ct = voice_clone.generate_speech_long(text, profile_id)
-                with open(audio_path, "wb") as f:
-                    f.write(audio_bytes)
-            await asyncio.to_thread(_run_clone)
+            raise Exception("Voice clone feature is not available in this build — please choose an Edge voice instead.")
 
         elif voice_type == 'old':
             # Legacy option → redirect to edge-tts
@@ -8408,396 +8397,79 @@ def list_past_jobs():
     return out[:30]
 
 # ==========================================
-# 5. VOICE CLONE + TTS STUDIO
+# 5. AUDIO LIBRARY + RECAP STYLES
 # ==========================================
 voice_tasks = {}
-try:
-    import voice_clone as vc
 
-    @app.get("/api/voice/profiles")
-    def voice_list_profiles():
-        return {"profiles": vc.list_profiles()}
 
-    @app.post("/api/voice/create")
-    async def voice_create(
-        name: str = Form(...),
-        provider: str = Form("f5-tts"),
-        edge_voice: str = Form("ms-MM-MintheNeural"),
-        edge_rate: str = Form("+0%"),
-        edge_pitch: str = Form("+0Hz"),
-        _: str = Depends(require_token),
-        sample_file: Optional[UploadFile] = File(None),
-    ):
-        if provider == "f5-tts":
-            if not sample_file or not sample_file.filename:
-                return JSONResponse({"ok": False, "error": "Audio sample file ထည့်ပါ (F5-TTS voice clone အတွက်)"}, status_code=400)
-            audio_bytes = await sample_file.read()
-            if len(audio_bytes) < 1000:
-                return JSONResponse({"ok": False, "error": "Audio sample အနည်းဆုံး 10KB ရှိရမယ်"}, status_code=400)
-            result = await asyncio.to_thread(vc.create_f5_voice, name, audio_bytes, sample_file.filename)
-        elif provider == "voxcpm2":
-            if not sample_file or not sample_file.filename:
-                return JSONResponse({"ok": False, "error": "Reference voice sample file လိုအပ်ပါတယ်"}, status_code=400)
-            audio_bytes = await sample_file.read()
-            result = await asyncio.to_thread(vc.create_voxcpm_voice, name, audio_bytes, sample_file.filename)
-        elif provider == "edge-tts":
-            result = await asyncio.to_thread(vc.create_edge_voice, name, edge_voice, edge_rate, edge_pitch)
-        else:
-            return JSONResponse({"ok": False, "error": f"Unknown provider: {provider}"}, status_code=400)
-        if not result.get("ok"):
-            return JSONResponse(result, status_code=400)
-        return result
+@app.get("/api/recap_styles")
+def recap_styles():
+    return {"default": RECAP_STYLE_DEFAULT, "styles": [
+        {"id": k, "label": v["label"], "label_mm": v.get("label_mm", v["label"]),
+         "featured": k in RECAP_STYLE_FEATURED}
+        for k, v in RECAP_STYLES.items()
+    ]}
 
-    @app.post("/api/voice/generate")
-    async def voice_generate(
-        text: str = Form(...),
-        profile_id: int = Form(...),
-        async_mode: str = Form(""),
-        _: str = Depends(require_token),
-    ):
-        if not text.strip():
-            return JSONResponse({"ok": False, "error": "Text ထည့်ပါ"}, status_code=400)
 
-        def _work(task_id):
+@app.get("/api/audio/library")
+def audio_library():
+    items = []
+    try:
+        for fn in sorted(os.listdir(AUDIO_DIR), reverse=True):
+            if not fn.endswith(('.mp3', '.wav', '.m4a', '.ogg')):
+                continue
+            p = os.path.join(AUDIO_DIR, fn)
+            if not os.path.isfile(p):
+                continue
+            dur = None
             try:
-                def _progress(i, total, msg):
-                    voice_tasks[task_id] = {"status": "running", "current": i, "total": total, "message": msg}
-                audio_bytes, ct = vc.generate_speech_long(text, profile_id, progress=_progress)
-                ext = ".wav" if "wav" in ct else ".mp3"
-                fname = f"vs_{profile_id}_{int(time.time()*1000)}{ext}"
-                out_path = os.path.join(AUDIO_DIR, fname)
-                with open(out_path, "wb") as f:
-                    f.write(audio_bytes)
-                voice_tasks[task_id] = {
-                    "status": "done",
-                    "current": 1, "total": 1, "message": "ပြီးပါပြီ",
-                    "filename": fname, "url": f"/audio/{fname}",
-                    "size_kb": round(len(audio_bytes) / 1024),
-                }
-            except asyncio.TimeoutError:
-                voice_tasks[task_id] = {"status": "error", "error": "Voice generation timed out (90s). Space က နှေးနေသည် / အလုပ်များနေသည်"}
-            except Exception as e:
-                voice_tasks[task_id] = {"status": "error", "error": str(e)[:300]}
+                dur = round(float(subprocess.check_output(
+                    ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                     "-of", "default=noprint_wrappers=1:nokey=1", p]).decode().strip()), 1)
+            except Exception:
+                pass
+            items.append({
+                "filename": fn, "url": f"/audio/{fn}",
+                "size_kb": round(os.path.getsize(p) / 1024), "duration": dur,
+                "created": time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(p))),
+            })
+    except Exception as e:
+        print(f"[AUDIO LIB] Error: {e}")
+    return {"items": items}
 
-        if str(async_mode) == "1":
-            task_id = f"t{int(time.time()*1000)}"
-            voice_tasks[task_id] = {"status": "running", "current": 0, "total": 0, "message": "စတင်နေပါသည်..."}
-            import threading
-            threading.Thread(target=_work, args=(task_id,), daemon=True).start()
-            while len(voice_tasks) > 50:
-                voice_tasks.pop(next(iter(voice_tasks)))
-            return {"ok": True, "task_id": task_id, "async": True}
-        else:
-            task_id = f"t{int(time.time()*1000)}"
-            _work(task_id)
-            t = voice_tasks[task_id]
-            if t.get("status") == "done":
-                return {"ok": True, "filename": t["filename"], "url": t["url"], "size_kb": t["size_kb"]}
-            return JSONResponse({"ok": False, "error": t.get("error", "Generation failed")}, status_code=500)
 
-    @app.get("/api/voice/status/{task_id}")
-    def voice_status(task_id: str):
-        t = voice_tasks.get(task_id)
-        if not t:
-            return JSONResponse({"ok": False, "error": "Task not found"}, status_code=404)
-        out = {"ok": True, "status": t.get("status"), "current": t.get("current", 0),
-               "total": t.get("total", 0), "message": t.get("message", "")}
-        if t.get("status") == "done":
-            out.update({"filename": t.get("filename"), "url": t.get("url"), "size_kb": t.get("size_kb")})
-        if t.get("status") == "error":
-            out["error"] = t.get("error", "Failed")
-        return out
+@app.post("/api/audio/upload")
+async def audio_upload(file: UploadFile = File(...), _: str = Depends(require_token)):
+    """
+    Add a pre-made audio file (e.g. generated on Kaggle/Colab, or any
+    other tool) straight into the Audio Library, so it's usable
+    anywhere in the app exactly like a live-generated voice track —
+    no server-side TTS call needed for this file.
+    """
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in (".mp3", ".wav", ".m4a", ".ogg"):
+        return JSONResponse({"ok": False, "error": "mp3/wav/m4a/ogg ဖိုင်မျိုးသာ လက်ခံပါတယ်"}, status_code=400)
+    audio_bytes = await file.read()
+    if len(audio_bytes) < 1000:
+        return JSONResponse({"ok": False, "error": "Audio file အနည်းဆုံး 1KB ရှိရမယ်"}, status_code=400)
+    safe_base = re.sub(r"[^A-Za-z0-9_.-]", "_", os.path.basename(file.filename))
+    fname = f"{int(time.time())}_{safe_base}"
+    out_path = os.path.join(AUDIO_DIR, fname)
+    with open(out_path, "wb") as f:
+        f.write(audio_bytes)
+    return {"ok": True, "filename": fname, "url": f"/audio/{fname}"}
 
-    @app.post("/api/voice/design")
-    async def voice_design(
-        text: str = Form(...),
-        control: str = Form(""),
-        cfg_value: float = Form(2.0),
-        _: str = Depends(require_token),
-    ):
-        """Generate speech with a designed voice (no reference audio needed)."""
-        if not text.strip():
-            return JSONResponse({"ok": False, "error": "Text ထည့်ပါ"}, status_code=400)
-        try:
-            audio = await asyncio.to_thread(vc.generate_voice_design, text, control, cfg_value)
-            if not audio:
-                return JSONResponse({"ok": False, "error": "VoxCPM2 API failed"}, status_code=500)
-            fname = f"vd_{int(time.time()*1000)}.wav"
-            out_path = os.path.join(AUDIO_DIR, fname)
-            with open(out_path, "wb") as f:
-                f.write(audio)
-            return {"ok": True, "filename": fname, "url": f"/audio/{fname}",
-                    "size_kb": round(len(audio) / 1024)}
-        except Exception as e:
-            return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
-    @app.delete("/api/voice/delete/{profile_id}")
-    def voice_delete(profile_id: int, _: str = Depends(require_token)):
-        vc.delete_profile(profile_id)
+@app.delete("/api/audio/delete/{filename}")
+def audio_delete(filename: str, _: str = Depends(require_token)):
+    safe = os.path.basename(filename)
+    if not safe or safe.startswith('_concat'):
+        return JSONResponse({"ok": False, "error": "Invalid filename"}, status_code=400)
+    p = os.path.join(AUDIO_DIR, safe)
+    if os.path.isfile(p):
+        os.remove(p)
         return {"ok": True}
-
-    @app.post("/api/voice/backup")
-    def voice_backup(_: str = Depends(require_token)):
-        try:
-            blob = vc.build_backup_bytes()
-            fname = f"voice_backup_{int(time.time())}.zip"
-            out_path = os.path.join(DOWNLOAD_DIR, fname)
-            with open(out_path, "wb") as f:
-                f.write(blob)
-            return {"ok": True, "filename": fname, "url": f"/downloads/{fname}",
-                    "size_kb": round(len(blob) / 1024)}
-        except Exception as e:
-            return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
-
-    @app.post("/api/voice/restore")
-    async def voice_restore(backup_file: UploadFile = File(...), _: str = Depends(require_token)):
-        data = await backup_file.read()
-        if len(data) > 200 * 1024 * 1024:
-            return JSONResponse({"ok": False, "error": "Backup zip 200MB ထက် ကြီးလွန်းပါသည်"}, status_code=400)
-        res = vc.restore_backup_bytes(data)
-        if not res.get("ok"):
-            return JSONResponse(res, status_code=400)
-        return res
-
-    @app.get("/api/recap_styles")
-    def recap_styles():
-        return {"default": RECAP_STYLE_DEFAULT, "styles": [
-            {"id": k, "label": v["label"], "label_mm": v.get("label_mm", v["label"]),
-             "featured": k in RECAP_STYLE_FEATURED}
-            for k, v in RECAP_STYLES.items()
-        ]}
-
-    @app.get("/api/audio/library")
-    def audio_library():
-        items = []
-        try:
-            for fn in sorted(os.listdir(AUDIO_DIR), reverse=True):
-                if not fn.endswith(('.mp3', '.wav', '.m4a', '.ogg')):
-                    continue
-                p = os.path.join(AUDIO_DIR, fn)
-                if not os.path.isfile(p):
-                    continue
-                dur = None
-                try:
-                    dur = round(float(subprocess.check_output(
-                        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-                         "-of", "default=noprint_wrappers=1:nokey=1", p]).decode().strip()), 1)
-                except Exception:
-                    pass
-                items.append({
-                    "filename": fn, "url": f"/audio/{fn}",
-                    "size_kb": round(os.path.getsize(p) / 1024), "duration": dur,
-                    "created": time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(p))),
-                })
-        except Exception as e:
-            print(f"[AUDIO LIB] Error: {e}")
-        return {"items": items}
-
-    @app.post("/api/audio/upload")
-    async def audio_upload(file: UploadFile = File(...), _: str = Depends(require_token)):
-        """
-        Add a pre-made audio file (e.g. generated on Kaggle/Colab, or any
-        other tool) straight into the Audio Library, so it's usable
-        anywhere in the app exactly like a live-generated voice track —
-        no server-side TTS call needed for this file.
-        """
-        ext = os.path.splitext(file.filename or "")[1].lower()
-        if ext not in (".mp3", ".wav", ".m4a", ".ogg"):
-            return JSONResponse({"ok": False, "error": "mp3/wav/m4a/ogg ဖိုင်မျိုးသာ လက်ခံပါတယ်"}, status_code=400)
-        audio_bytes = await file.read()
-        if len(audio_bytes) < 1000:
-            return JSONResponse({"ok": False, "error": "Audio file အနည်းဆုံး 1KB ရှိရမယ်"}, status_code=400)
-        safe_base = re.sub(r"[^A-Za-z0-9_.-]", "_", os.path.basename(file.filename))
-        fname = f"{int(time.time())}_{safe_base}"
-        out_path = os.path.join(AUDIO_DIR, fname)
-        with open(out_path, "wb") as f:
-            f.write(audio_bytes)
-        return {"ok": True, "filename": fname, "url": f"/audio/{fname}"}
-
-    @app.delete("/api/audio/delete/{filename}")
-    def audio_delete(filename: str, _: str = Depends(require_token)):
-        safe = os.path.basename(filename)
-        if not safe or safe.startswith('_concat'):
-            return JSONResponse({"ok": False, "error": "Invalid filename"}, status_code=400)
-        p = os.path.join(AUDIO_DIR, safe)
-        if os.path.isfile(p):
-            os.remove(p)
-            return {"ok": True}
-        return JSONResponse({"ok": False, "error": "File not found"}, status_code=404)
-
-    def _auto_restore_voices():
-        import glob as _glob
-        candidates = []
-        for pat in [os.path.join(BASE_DIR, "voice_backup*.zip"),
-                    os.path.join(DATA_DIR, "voice_backup*.zip")]:
-            candidates.extend(_glob.glob(pat))
-        if not candidates:
-            return
-        for c in candidates[:1]:
-            try:
-                with open(c, "rb") as f:
-                    blob = f.read()
-                res = vc.restore_backup_bytes(blob)
-                print(f"[VOICE] Auto-restore from {c}: {res}")
-            except Exception as e:
-                print(f"[VOICE] Auto-restore failed ({c}): {e}")
-
-    _auto_restore_voices()
-
-    print("[STARTUP] Voice Clone Studio loaded")
-except Exception as vc_err:
-    print(f"[STARTUP] Voice Clone disabled: {vc_err}")
-
-# ==========================================
-# 6. STORY WRITER (novel / audiobook script generator)
-# ==========================================
-try:
-    import story_writer as sw
-
-    @app.get("/api/story/authors")
-    def story_authors():
-        return {"ok": True, "authors": sw.author_list(), "genres": sw.genre_list()}
-
-    @app.post("/api/story/create")
-    async def story_create(
-        title: str = Form(...),
-        author_id: str = Form(...),
-        _: str = Depends(require_token),
-        genre_id: str = Form(...),
-        lang: str = Form("my"),
-        num_chapters: int = Form(20),
-        target_words: int = Form(600),
-        sample_file: Optional[UploadFile] = File(None),
-    ):
-        if num_chapters > 200:
-            return JSONResponse({"ok": False, "error": "Max 200 chapters"}, status_code=400)
-        if title.strip() and len(title.strip()) < 2:
-            return JSONResponse({"ok": False, "error": "Title က 2 လုံးထက်ရှည်ရမယ်"}, status_code=400)
-        sample_excerpt = ""
-        if sample_file and sample_file.filename:
-            try:
-                data = await sample_file.read()
-                sample_excerpt = data.decode("utf-8", errors="ignore")
-            except Exception as e:
-                print(f"[STORY] sample read failed: {e}")
-        try:
-            story = sw.create_story(
-                title=title, author_id=author_id, genre_id=genre_id,
-                lang=lang, num_chapters=num_chapters,
-                target_words=target_words, sample_excerpt=sample_excerpt,
-            )
-        except ValueError as ve:
-            return JSONResponse({"ok": False, "error": str(ve)}, status_code=400)
-        story_id = sw.start_writing(story)
-        return {"ok": True, "story_id": story_id, "async": True}
-
-    @app.get("/api/story/status/{story_id}")
-    def story_status(story_id: str):
-        s = sw.story_status(story_id)
-        if not s:
-            return JSONResponse({"ok": False, "error": "Story not found"}, status_code=404)
-        return s
-
-    @app.get("/api/story/library")
-    def story_library():
-        return {"ok": True, "items": sw.story_library()}
-
-    @app.get("/api/story/download")
-    def story_download(id: str = "", mode: str = "full"):
-        safe_id = os.path.basename(id)
-        path = os.path.join(sw.STORIES_DIR, f"{safe_id}_narration.txt") if mode == "narration" \
-            else os.path.join(sw.STORIES_DIR, f"{safe_id}.txt")
-        if not os.path.isfile(path):
-            return JSONResponse({"ok": False, "error": "File not ready"}, status_code=404)
-        ext = "_narration.txt" if mode == "narration" else ".txt"
-        return FileResponse(path, filename=f"{safe_id}{ext}",
-                            media_type="text/plain; charset=utf-8")
-
-    @app.delete("/api/story/{story_id}")
-    def story_delete(story_id: str, _: str = Depends(require_token)):
-        sw.delete_story(os.path.basename(story_id))
-        return {"ok": True}
-
-    sw.resume_all()
-    print("[STARTUP] Story Writer loaded")
-except Exception as sw_err:
-    import traceback as _sw_tb
-    print(f"[STARTUP] Story Writer disabled: {sw_err}")
-    _sw_tb.print_exc()
-
-# ==========================================
-# 7. THUMBNAIL GENERATOR
-# ==========================================
-try:
-    import thumbnail_gen as thumb
-
-    @app.post("/api/thumbnail/generate")
-    async def thumbnail_generate(
-        video_title: str = Form(...),
-        hook_text: str = Form(""),
-        language: str = Form("en"),
-        video_id: str = Form(""),
-        _: str = Depends(require_token),
-    ):
-        # If this video already has a saved recap script, feed it in so the
-        # thumbnail concepts are grounded in the real story, not just the title.
-        story_summary = ""
-        if video_id:
-            for fname in os.listdir(DOWNLOAD_DIR):
-                if fname.startswith(video_id) and fname.endswith("_script.txt"):
-                    try:
-                        with open(os.path.join(DOWNLOAD_DIR, fname), "r", encoding="utf-8") as f:
-                            story_summary += f.read() + " "
-                    except Exception:
-                        pass
-        results = await asyncio.to_thread(
-            thumb.generate_thumbnails, video_title, hook_text, language, video_id,
-            story_summary.strip(),
-        )
-        return {"ok": True, "thumbnails": [
-            {"url": f"/thumbnails/{r['filename']}", "title": r["title"], "prompt": r["prompt"]}
-            for r in results
-        ]}
-
-    @app.get("/api/thumbnail/list")
-    def thumbnail_list():
-        files = sorted(os.listdir(THUMB_DIR), reverse=True)[:30]
-        return [{"filename": f, "url": f"/thumbnails/{f}"} for f in files if f.endswith(('.jpg','.png'))]
-
-    print("[STARTUP] Thumbnail Generator loaded")
-except Exception as th_err:
-    print(f"[STARTUP] Thumbnail Generator disabled: {th_err}")
-
-# ==========================================
-# 8. MOVIE FINDER EXTENSION (discovery + download + auto-recap)
-#    Wrapped in try/except so the recap tool keeps working
-#    even if the finder module ever fails to load.
-# ==========================================
-try:
-    import movie_finder
-    movie_finder.set_recap_pipeline(run_advanced_pipeline)
-    app.include_router(movie_finder.router)
-    movie_finder.init_movie_finder()
-    print("[STARTUP] Movie Finder extension loaded")
-except Exception as mf_err:
-    import traceback
-    print(f"[STARTUP] Movie Finder disabled: {mf_err}")
-    traceback.print_exc()
-
-# ==========================================
-# 9. SHORTS/REELS GENERATOR (standalone - operates on a finished recap's
-#    own output files, no extra Gemini-video/Whisper cost; see
-#    shorts_reels.py's module docstring). Wrapped in try/except so the
-#    recap tool keeps working even if this module ever fails to load.
-# ==========================================
-try:
-    import shorts_reels
-    app.include_router(shorts_reels.router)
-    print("[STARTUP] Shorts/Reels generator loaded")
-except Exception as sr_err:
-    import traceback
-    print(f"[STARTUP] Shorts/Reels generator disabled: {sr_err}")
-    traceback.print_exc()
+    return JSONResponse({"ok": False, "error": "File not found"}, status_code=404)
 
 if __name__ == "__main__":
     import uvicorn

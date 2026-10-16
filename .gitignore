@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# App runtime data
+downloads/
+fonts/
+data/
+temp/
+chunked_uploads/
+cloned_voices/
+tools/
+*.log
+
+# Local secrets
+secrets.bat
+.env
