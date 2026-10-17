@@ -1211,24 +1211,6 @@ select option { background: #0e1730; color: #eef2ff; }
                 { value: "ar-EG-SalmaNeural", text: "Salma (Arabic Female)" },
                 { value: "fr-FR-DeniseNeural", text: "Denise (French Female)" },
                 { value: "ru-RU-SvetlanaNeural", text: "Svetlana (Russian Female)" }
-            ],
-            clone: [], // populated dynamically from /api/voice/profiles
-            new: [ // Gemini Cloud Premium TTS (15 Voices)
-                { value: "gemini:Aoede", text: "Aoede (Female, Breezy)" },
-                { value: "gemini:Charon", text: "Charon (Male, Informative)" },
-                { value: "gemini:Fenrir", text: "Fenrir (Male, Excitable)" },
-                { value: "gemini:Kore", text: "Kore (Female, Firm)" },
-                { value: "gemini:Puck", text: "Puck (Male, Upbeat)" },
-                { value: "gemini:Zephyr", text: "Zephyr (Female, Bright)" },
-                { value: "gemini:Leda", text: "Leda (Female, Youthful)" },
-                { value: "gemini:Orus", text: "Orus (Male, Firm)" },
-                { value: "gemini:Enceladus", text: "Enceladus (Male, Breathy)" },
-                { value: "gemini:Umbriel", text: "Umbriel (Male, Easy-going)" },
-                { value: "gemini:Despina", text: "Despina (Female, Smooth)" },
-                { value: "gemini:Achernar", text: "Achernar (Female, Soft)" },
-                { value: "gemini:Sulafat", text: "Sulafat (Female, Warm)" },
-                { value: "gemini:Gacrux", text: "Gacrux (Female, Mature)" },
-                { value: "gemini:Algenib", text: "Algenib (Male, Gravelly)" }
             ]
         };
 
@@ -1238,24 +1220,7 @@ select option { background: #0e1730; color: #eef2ff; }
             document.getElementById('voiceType').value = type;
             const select = document.getElementById('voiceId');
             select.innerHTML = '';
-            if (type === 'clone') {
-                // Load saved voice profiles from API
-                fetch('/api/voice/profiles').then(r => r.json()).then(data => {
-                    const profiles = data.profiles || [];
-                    if (profiles.length === 0) {
-                        select.innerHTML = '<option value="">Voice clone မရှိသေးပါ — Voice Studio tab မှ ဖန်တီးပါ</option>';
-                    } else {
-                        profiles.forEach(p => {
-                            const label = p.provider === 'f5-tts' ? `[F5-TTS] ${p.name}` : `[Edge] ${p.name}`;
-                            select.innerHTML += `<option value="${p.id}">${label}</option>`;
-                        });
-                    }
-                }).catch(() => {
-                    select.innerHTML = '<option value="">Voice load failed</option>';
-                });
-            } else {
-                voiceOptions[type].forEach(opt => select.innerHTML += `<option value="${opt.value}">${opt.text}</option>`);
-            }
+            (voiceOptions[type] || []).forEach(opt => select.innerHTML += `<option value="${opt.value}">${opt.text}</option>`);
         }
 
         // =====================================
@@ -1682,10 +1647,8 @@ select option { background: #0e1730; color: #eef2ff; }
             fd.append('ai_budget', document.getElementById('aiBudget').value);
             fd.append('max_audio_stretch', document.getElementById('maxAudioStretch').value);
             fd.append('min_beat_sec', document.getElementById('minBeatSec').value);
-            fd.append('make_shorts', !!document.getElementById('makeShortsToggle')?.checked);
-            fd.append('num_shorts', document.getElementById('numShorts')?.value ?? '3');
-            fd.append('make_teaser', !!document.getElementById('makeTeaserToggle')?.checked);
-            fd.append('num_flashes', document.getElementById('numFlashes')?.value ?? '6');
+            fd.append('make_shorts', 'false');
+            fd.append('make_teaser', 'false');
             fd.append('split_count', document.getElementById('splittingClips').value);
             fd.append('merge_parts', effectiveAnalysisEngine === 'gemini_auto' && document.getElementById('autoMergeToggle')?.checked ? 'true' : 'false');
             fd.append('continue_from_id', document.getElementById('continueFromId').value);
@@ -3012,16 +2975,6 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             if (fallback) fallback.value = 'freeze';
             const stretch = document.getElementById('maxAudioStretch');
             if (stretch) stretch.value = '1.00';
-            const shorts = document.getElementById('makeShortsToggle');
-            if (shorts) shorts.checked = false;
-            const teaser = document.getElementById('makeTeaserToggle');
-            if (teaser) teaser.checked = false;
-            // Gemini/voice-clone buttons stay available only as compatibility controls; Edge TTS is default.
-            document.querySelectorAll('.voice-btn').forEach((b) => {
-                if ((b.textContent || '').toUpperCase().includes('GEMINI') || (b.textContent || '').toUpperCase().includes('CLONE')) {
-                    b.classList.add('hidden');
-                }
-            });
             const voiceType = document.getElementById('voiceType');
             if (voiceType) voiceType.value = 'edge';
             const voiceId = document.getElementById('voiceId');
