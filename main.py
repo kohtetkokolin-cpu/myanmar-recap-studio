@@ -219,6 +219,15 @@ def _safe_aspect_ratio(value):
 # ==========================================
 DEFAULT_FONT_PATH = os.path.join(FONTS_DIR, "Padauk.ttf")
 
+def _ff_filter_path(p):
+    """Escape a filesystem path for use inside an ffmpeg filter option value.
+
+    ffmpeg splits filter options on ':' and treats '\' as an escape char, so a
+    Windows path like D:\\dir\\file.ass must become D\\:/dir/file.ass when used
+    inside ass='...' / fontsdir='...' / subtitles='...' filter arguments.
+    """
+    return str(p).replace("\\", "/").replace(":", "\\:")
+
 def download_default_font():
     if not os.path.exists(DEFAULT_FONT_PATH):
         print("Downloading Default Unicode Font...")
@@ -4993,8 +5002,8 @@ CURRENT SCENES:
                 ffmpeg_env = dict(os.environ)
                 ffmpeg_env['FONTCONFIG_FILE'] = fc_conf
 
-                ass_esc = ass_path.replace('\\','/')
-                filters.append(f"[{last_v}]ass='{ass_esc}':fontsdir='{f_dir}'[{last_v}_sub]")
+                ass_esc = _ff_filter_path(ass_path)
+                filters.append(f"[{last_v}]ass='{ass_esc}':fontsdir='{_ff_filter_path(f_dir)}'[{last_v}_sub]")
                 last_v = f"{last_v}_sub"
 
         inputs.extend(["-i", audio_path])
@@ -6442,7 +6451,7 @@ def _dv2_render(video_id, local_path, scenes, settings, font_path, temp_dir):
                 _fc.write(f'<?xml version="1.0"?>\n<!DOCTYPE fontconfig SYSTEM "fonts.dtd">\n'
                           f'<fontconfig><dir>{f_dir}</dir><cachedir>{fc_cache}</cachedir></fontconfig>')
             env = dict(os.environ); env['FONTCONFIG_FILE'] = fc_conf
-            filters.append(f"[{last_v}]ass='{ass_path.replace(chr(92), '/')}':fontsdir='{f_dir}'[vs]")
+            filters.append(f"[{last_v}]ass='{_ff_filter_path(ass_path)}':fontsdir='{_ff_filter_path(f_dir)}'[vs]")
             last_v = "vs"
     final_video = os.path.join(DOWNLOAD_DIR, f"{video_id}_final.mp4")
     cmd = ["ffmpeg", "-y", "-i", video_all, "-i", audio_all]
@@ -6899,7 +6908,7 @@ def _story_graph(settings, cfg, fx, W, H, n, ass_path=None, has_logo=False, font
         th = max(2, int(round(fx["border"]["thick"] / 100.0 * H)))
         add(f"drawbox=x=0:y=0:w=iw:h=ih:color={_FX_COLORS[fx['border']['color']]}@0.95:t={th}")
     if ass_path:
-        add(f"ass='{ass_path.replace(chr(92), '/')}':fontsdir='{fonts_dir or FONTS_DIR}'")
+        add(f"ass='{_ff_filter_path(ass_path)}':fontsdir='{_ff_filter_path(fonts_dir or FONTS_DIR)}'")
     parts.append(f"[{cur}]format=yuv420p[vout]")
     return ";".join(parts)
 
