@@ -2409,10 +2409,6 @@ select option { background: #0e1730; color: #eef2ff; }
             document.getElementById('vsEdgeOpts').classList.toggle('hidden', p !== 'edge-tts');
         }
 
-        document.getElementById('vsEdgeRate').oninput = function() { document.getElementById('vsEdgeRateVal').textContent = (this.value >= 0 ? '+' : '') + this.value + '%'; };
-        document.getElementById('vsEdgePitch').oninput = function() { document.getElementById('vsEdgePitchVal').textContent = (this.value >= 0 ? '+' : '') + this.value + 'Hz'; };
-        document.getElementById('vsGenText').oninput = function() { document.getElementById('vsCharCount').textContent = this.value.length + ' chars'; };
-
         async function vsCreateVoice() {
             const name = document.getElementById('vsVoiceName').value.trim();
             if (!name) { toast('Voice name ထည့်ပါ'); return; }
@@ -4272,7 +4268,6 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         // Movie Finder init
         switchTab('studio');
         renderBlurRegions();
-        loadAudioLibrary();
         applySimpleRecapUI();
         updateOutputResolutionForRatio();
         applyRecapPreset(document.getElementById('recapPreset')?.value || 'series');
