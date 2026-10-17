@@ -173,27 +173,58 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto mb-5">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <button type="button" id="autoToolTab" onclick="switchRecapTool('auto')" class="md:order-1 text-left rounded-2xl border-2 border-blue-600 bg-blue-600 text-white p-4 shadow-lg">
-                    <div class="text-xs font-bold uppercase tracking-wide">RECAP AUTO</div>
-                    <div class="text-sm font-bold mt-1">Gemini Auto Recap</div>
-                    <div class="text-[11px] opacity-90 mt-1">Visual Hook: အရေးကြီးဆုံး scene ကိုရွေး → short-form script → narration → render</div>
-                </button>
-                <button type="button" id="dialogueToolTab" onclick="switchRecapTool('dialogue')" class="md:order-2 text-left rounded-2xl border-2 border-amber-200 bg-white text-amber-700 p-4 shadow-sm">
-                    <div class="text-xs font-bold uppercase tracking-wide">RECAP DIALOGUE</div>
-                    <div class="text-sm font-bold mt-1">Short-Drama Translation + Voices</div>
-                    <div class="text-[11px] text-slate-500 mt-1">မူရင်း dialogue timing ကိုထိန်းပြီး မြန်မာလို ဘာသာပြန်၊ Narrator / Male / Female အသံခွဲရန်</div>
-                </button>
-                <button type="button" id="manualToolTab" onclick="switchRecapTool('manual')" class="md:order-3 text-left rounded-2xl border-2 border-violet-200 bg-white text-violet-700 p-4 shadow-sm">
-                    <div class="text-xs font-bold uppercase tracking-wide">RECAP MANUAL</div>
-                    <div class="text-sm font-bold mt-1">Manual Scene Review + Sync</div>
-                    <div class="text-[11px] text-slate-500 mt-1">Video + narration ထည့်ပြီး 5s scene mapping ကို ကိုယ်တိုင်စစ်/ပြင်/preview/render</div>
-                </button>
-                <button type="button" id="storyToolTab" onclick="switchRecapTool('story')" class="md:order-4 text-left rounded-2xl border-2 border-emerald-200 bg-white text-emerald-700 p-4 shadow-sm">
-                    <div class="text-xs font-bold uppercase tracking-wide">STORY STUDIO</div>
-                    <div class="text-sm font-bold mt-1">Long-form Story Retelling (၁၀ ပုံစံ)</div>
-                    <div class="text-[11px] text-slate-500 mt-1">အခန်းခွဲ၊ hook/cliffhanger ပါတဲ့ audio-first ဇာတ်လမ်းပြော၊ Pilot နမူနာ၊ YouTube chapters</div>
-                </button>
+            <!-- Unified workflow header: one guided flow (Source → Analyze Once → Shape → Preview → Export) -->
+            <div class="card p-4 mb-4">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                    <div class="text-[11px] font-bold tracking-widest text-indigo-300 uppercase"><i class="fa-solid fa-diagram-project mr-1"></i>Unified Recap Workflow</div>
+                    <div class="flex items-center gap-2">
+                        <span id="mrsIndexChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">Analyze-once: —</span>
+                        <span id="mrsHwChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">CPU encode</span>
+                    </div>
+                </div>
+                <div id="mrsStepStrip" class="flex items-center gap-1 md:gap-2 overflow-x-auto pb-1">
+                    <div class="workspace-step" data-step="1"><i class="fa-solid fa-cloud-arrow-up"></i><span>Source</span></div><div class="workspace-line"></div>
+                    <div class="workspace-step" data-step="2"><i class="fa-solid fa-magnifying-glass-chart"></i><span>Analyze Once</span></div><div class="workspace-line"></div>
+                    <div class="workspace-step" data-step="3"><i class="fa-solid fa-sliders"></i><span>Shape</span></div><div class="workspace-line"></div>
+                    <div class="workspace-step" data-step="4"><i class="fa-solid fa-film"></i><span>Preview</span></div><div class="workspace-line"></div>
+                    <div class="workspace-step" data-step="5"><i class="fa-solid fa-download"></i><span>Export</span></div>
+                </div>
+            </div>
+
+            <!-- Workflow mode selector -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                <button type="button" id="autoToolTab" onclick="switchRecapTool('auto')" title="Auto analysis, narration and render" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🤖 Auto Recap</button>
+                <button type="button" id="dialogueToolTab" onclick="switchRecapTool('dialogue')" title="Dialogue translation + multi-voice" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🎙 Dialogue / Dubbing</button>
+                <button type="button" id="manualToolTab" onclick="switchRecapTool('manual')" title="Review every scene mapping by hand" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🛠 Manual Review</button>
+                <button type="button" id="storyToolTab" onclick="switchRecapTool('story')" title="Long-form audio-first story retelling" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">📚 Story Studio</button>
+            </div>
+
+            <!-- Step 2 · Analyze Once (Movie Index) -->
+            <div class="card p-4 mb-4 border-l-4 border-teal-500">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                    <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-magnifying-glass-chart text-teal-400 mr-2"></i>Step 2 · Analyze Once (Movie Index)</h3>
+                    <span id="mrsIndexStatus" class="text-[10px] text-slate-400">source ကို တစ်ခါ index လုပ်ထားရင် နောက် run တွေမှာ Whisper/scene-detect ကျော်ပါမယ်</span>
+                </div>
+                <div class="flex flex-col md:flex-row gap-2">
+                    <input id="mrsIndexFile" type="file" accept="video/*" class="flex-1 text-xs bg-white border rounded p-2">
+                    <button type="button" id="mrsIndexBuildBtn" onclick="mrsBuildIndex()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-bolt mr-1"></i>Analyze Once</button>
+                    <button type="button" onclick="mrsLoadIndexList()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold" title="Index list ပြန်ဆွဲ"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+                <div id="mrsIndexList" class="mt-2 text-[11px] text-slate-400 space-y-1"></div>
+            </div>
+
+            <!-- Step 3 · Fair-use Transform -->
+            <div class="card p-4 mb-4 border-l-4 border-amber-500">
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                    <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>Step 3 · Fair-use Transform</h3>
+                    <span class="text-[10px] text-slate-400">transform ကို Dialogue Manual Designer + Auto toggles ဆီ ချိတ်ပေးမယ် (ဥပဒေအာမခံ မဟုတ်)</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
+                    <label class="text-[11px] font-bold text-slate-500">Transform preset
+                        <select id="mrsFairUsePreset" class="w-full mt-1 border rounded p-2 text-xs font-normal" onchange="mrsApplyFairUse(this.value)"></select>
+                    </label>
+                    <div id="mrsFairUseHelp" class="text-[10px] text-slate-400 pb-2"></div>
+                </div>
             </div>
         </div>
     <section id="storyStudio" class="max-w-7xl mx-auto hidden">
@@ -1699,6 +1730,9 @@
         }
 
         async function loadThumbnails() {
+            // Thumbnails are intentionally disabled in this recap-only app, and the
+            // /api/thumbnail/* backend no longer exists. Skip the dead request.
+            return;
             try {
                 const res = await fetch('/api/thumbnail/list');
                 const thumbs = await res.json();
@@ -4134,10 +4168,13 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             if (manual) manual.classList.toggle('hidden', !isManual);
             if (dialogue) dialogue.classList.toggle('hidden', !isDialogue);
             if (story) story.classList.toggle('hidden', !isStory);
-            if (at) at.className = isAuto ? 'text-left rounded-2xl border-2 border-blue-600 bg-blue-600 text-white p-4 shadow-lg' : 'text-left rounded-2xl border-2 border-blue-200 bg-white text-blue-700 p-4 shadow-sm';
-            if (mt) mt.className = isManual ? 'text-left rounded-2xl border-2 border-violet-600 bg-violet-600 text-white p-4 shadow-lg' : 'text-left rounded-2xl border-2 border-violet-200 bg-white text-violet-700 p-4 shadow-sm';
-            if (dt) dt.className = isDialogue ? 'text-left rounded-2xl border-2 border-amber-600 bg-amber-600 text-white p-4 shadow-lg' : 'text-left rounded-2xl border-2 border-amber-200 bg-white text-amber-700 p-4 shadow-sm';
-            if (st) st.className = isStory ? 'text-left rounded-2xl border-2 border-emerald-600 bg-emerald-600 text-white p-4 shadow-lg' : 'text-left rounded-2xl border-2 border-emerald-200 bg-white text-emerald-700 p-4 shadow-sm';
+            const base = 'text-left rounded-xl border-2 px-3 py-2 text-xs font-bold ';
+            const OFF = 'bg-white/5 text-slate-300 border-slate-600';
+            if (at) at.className = base + (isAuto ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : OFF);
+            if (dt) dt.className = base + (isDialogue ? 'bg-amber-600 border-amber-600 text-white shadow-lg' : OFF);
+            if (mt) mt.className = base + (isManual ? 'bg-violet-600 border-violet-600 text-white shadow-lg' : OFF);
+            if (st) st.className = base + (isStory ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : OFF);
+            mrsSetStep(3);
             if (isManual) document.getElementById('manualVideo')?.focus();
             if (isDialogue) { ddOpenDesigner(); }
             if (isStory) { loadStoryStudio(); if (!document.getElementById('ssProjectBox').classList.contains('hidden')) pjLoadList(); }
@@ -4208,6 +4245,134 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             applySimpleRecapUI();
         }
 
+        // ── Unified workflow: step strip + Analyze Once + Fair-use + HW chip ──
+        function mrsSetStep(n) {
+            document.querySelectorAll('#mrsStepStrip .workspace-step').forEach(el => {
+                el.classList.toggle('active', parseInt(el.dataset.step || '0') <= parseInt(n || 1));
+            });
+        }
+
+        let MRS_PRESETS = [];
+
+        async function mrsLoadSystem() {
+            // HW encoder status chip (read-only; enable with MRS_HW_ENCODE=1 on the server)
+            try {
+                const enc = await (await fetch('/api/encoders')).json();
+                const chip = document.getElementById('mrsHwChip');
+                if (chip) {
+                    if (enc && enc.enabled) {
+                        chip.textContent = '⚡ HW encode: ' + (enc.chosen || 'on');
+                        chip.className = 'text-[10px] font-bold px-2 py-1 rounded bg-emerald-600 text-white';
+                    } else {
+                        chip.textContent = 'CPU encode — MRS_HW_ENCODE=1 ဖွင့်နိုင်';
+                        chip.className = 'text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300';
+                    }
+                }
+            } catch (e) {}
+            // Fair-use presets
+            try {
+                const fu = await (await fetch('/api/fair_use/presets')).json();
+                MRS_PRESETS = (fu && fu.presets) || [];
+                const sel = document.getElementById('mrsFairUsePreset');
+                if (sel) {
+                    sel.innerHTML = MRS_PRESETS.map(p =>
+                        `<option value="${p.name}">${p.label}</option>`).join('');
+                    mrsApplyFairUse(sel.value);
+                }
+            } catch (e) {}
+            mrsLoadIndexList();
+        }
+
+        function mrsApplyFairUse(name) {
+            const help = document.getElementById('mrsFairUseHelp');
+            const p = MRS_PRESETS.find(x => x.name === name);
+            const fx = (p && p.fx) || {};
+            if (help) help.textContent = (p && p.help) || '';
+            // Merge into the Dialogue/Designer FX object (used by the exact-render paths)
+            try {
+                if (typeof FX === 'object' && FX) {
+                    Object.keys(fx).forEach(k => {
+                        const v = fx[k];
+                        if (v && typeof v === 'object' && FX[k] && typeof FX[k] === 'object') Object.assign(FX[k], v);
+                        else FX[k] = v;
+                    });
+                    if (typeof fxToUi === 'function') fxToUi();
+                }
+            } catch (e) {}
+            // Map the same preset onto the Auto transformation toggles
+            try {
+                const set = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+                set('bypassMirror', fx.mirror && fx.mirror !== 'off');
+                set('bypassColor', !!fx.color);
+                set('bypassRotation', !!fx.rotation);
+                set('bypassNoise', (fx.noise || 0) > 0);
+            } catch (e) {}
+        }
+
+        async function mrsLoadIndexList() {
+            const box = document.getElementById('mrsIndexList');
+            const chip = document.getElementById('mrsIndexChip');
+            if (!box) return;
+            try {
+                const d = await (await fetch('/api/movie_index/list')).json();
+                const items = (d && d.items) || [];
+                if (chip) {
+                    chip.textContent = 'Analyze-once: ' + items.length + ' index';
+                    chip.className = 'text-[10px] font-bold px-2 py-1 rounded ' +
+                        (items.length ? 'bg-teal-600 text-white' : 'bg-slate-700 text-slate-300');
+                }
+                box.innerHTML = items.length
+                    ? items.slice(0, 6).map(it => `<div class="flex justify-between gap-2 border border-slate-700 rounded px-2 py-1">
+                        <span class="truncate">${it.source || it.key}</span>
+                        <span class="text-slate-500 whitespace-nowrap">${it.duration ? Math.round(it.duration) + 's' : ''} · ${it.segments || 0} lines · ${it.shots || 0} shots</span></div>`).join('')
+                    : '<div class="text-slate-500">Index မရှိသေးပါ — video ရွေးပြီး "Analyze Once" နှိပ်ပါ။</div>';
+            } catch (e) {
+                box.innerHTML = '<div class="text-red-400">Index list မရနိုင်ပါ</div>';
+            }
+        }
+
+        async function mrsBuildIndex() {
+            const inp = document.getElementById('mrsIndexFile');
+            const btn = document.getElementById('mrsIndexBuildBtn');
+            const st = document.getElementById('mrsIndexStatus');
+            if (!inp || !inp.files[0]) { alert('Analyze Once အတွက် video ဖိုင်ကို အရင်ရွေးပါ။'); return; }
+            const fd = new FormData();
+            fd.append('video_file', inp.files[0]);
+            fd.append('detail', 'local');
+            if (btn) { btn.disabled = true; btn.classList.add('opacity-50'); }
+            if (st) st.textContent = 'Analyze စတင်နေပါသည် (Whisper + scene-detect)...';
+            try {
+                const d = await postForm('/api/movie_index/build', fd);
+                if (!d || !d.ok) throw new Error((d && d.error) || 'build failed');
+                if (st) st.textContent = 'နောက်ခံတွင် index လုပ်နေပါသည် (key ' + d.key.slice(0, 8) + ')...';
+                mrsPollIndex(d.key, st, btn);
+            } catch (e) {
+                if (st) st.textContent = 'Analyze မအောင်မြင်ပါ: ' + e.message;
+                if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
+            }
+        }
+
+        async function mrsPollIndex(key, st, btn) {
+            const vid = 'idx_' + key;
+            for (let i = 0; i < 600; i++) {
+                await new Promise(r => setTimeout(r, 3000));
+                try {
+                    const s = await (await fetch('/api/logs/' + encodeURIComponent(vid))).json();
+                    if (st) st.textContent = (s.progress || s.log || 'Index လုပ်နေပါသည်...').slice(0, 200);
+                    if (s.state === 'done') {
+                        if (st) st.textContent = '✅ Index ပြီးပါပြီ — နောက် run တွေမှာ ပြန်သုံးပါမည်။';
+                        if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
+                        mrsLoadIndexList();
+                        return;
+                    }
+                    if (s.state === 'error') break;
+                } catch (e) {}
+            }
+            if (st) st.textContent = 'Index အခြေအနေ မသေချာပါ — list ကို refresh လုပ်ကြည့်ပါ။';
+            if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
+            mrsLoadIndexList();
+        }
+
         // Movie Finder init
         switchTab('studio');
         renderBlurRegions();
@@ -4215,6 +4380,8 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         applySimpleRecapUI();
         updateOutputResolutionForRatio();
         applyRecapPreset(document.getElementById('recapPreset')?.value || 'series');
+        mrsSetStep(3);
+        mrsLoadSystem();
     </script>
 </body>
 </html>

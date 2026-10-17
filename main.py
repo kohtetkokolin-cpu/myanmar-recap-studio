@@ -5999,12 +5999,11 @@ async def preview_voice(
 # ==========================================
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    # The maintained frontend for this app is indexMRS.html.  Prefer it over
-    # any stale legacy index.html so backend/frontend edits are actually what
-    # users see at the root URL.
+    # The canonical frontend is index.html (indexMRS.html was renamed to it).
+    # Keep the extra candidates only as a fallback for older checkouts.
     candidates = [
-        os.path.join(BASE_DIR, "indexMRS.html"),
         os.path.join(BASE_DIR, "index.html"),
+        os.path.join(BASE_DIR, "indexMRS.html"),
         os.path.join(BASE_DIR, "index(8)_simplified.html"),
     ]
     for html_path in candidates:
@@ -8672,7 +8671,10 @@ def get_encoders():
 def get_fair_use_presets():
     if fair_use is None:
         return {"presets": [], "note": ""}
-    return {"presets": fair_use.list_presets(), "note": fair_use.legal_note()}
+    presets = [{"name": name, "label": p.get("label", ""), "help": p.get("help", ""),
+                "fx": p.get("fx", {})}
+               for name, p in fair_use.PRESETS.items()]
+    return {"presets": presets, "note": fair_use.legal_note()}
 
 
 @app.get("/api/movie_index/list")
@@ -8716,6 +8718,7 @@ def movie_index_status(filename: str = "", path: str = ""):
 @app.post("/api/movie_index/build")
 async def movie_index_build(
     background_tasks: BackgroundTasks,
+    video_file: Optional[UploadFile] = File(None),
     filename: str = Form(""),
     path: str = Form(""),
     detail: str = Form("local"),
@@ -8725,7 +8728,14 @@ async def movie_index_build(
     """Build (or rebuild) the reusable Movie Index for a source file."""
     if movie_index is None:
         return JSONResponse({"ok": False, "error": "movie_index module not available"}, status_code=503)
-    src = _resolve_index_source(filename, path)
+    if video_file is not None and video_file.filename:
+        safe = re.sub(r'[^A-Za-z0-9_.-]', '_', os.path.basename(video_file.filename))[:80]
+        dest = os.path.join(DOWNLOAD_DIR, "_idx_" + safe)
+        with open(dest, "wb") as buf:
+            shutil.copyfileobj(video_file.file, buf)
+        src = dest
+    else:
+        src = _resolve_index_source(filename, path)
     if not src:
         return JSONResponse({"ok": False, "error": "source file not found"}, status_code=404)
     key = movie_index.cache_key(src)
@@ -8737,7 +8747,10 @@ async def movie_index_build(
         deps = _index_deps(vid) if detail != "local" else None
         try:
             movie_index.build_index(src, deps=deps, detail=detail, rebuild=rebuild_b)
+            set_job_state(vid, state="done", progress="Index ပြီးပါပြီ")
+            log_status(vid, "Movie Index ပြီးပါပြီ — နောက် run တွေမှာ ပြန်သုံးပါမည်။")
         except Exception as e:  # noqa: BLE001
+            set_job_state(vid, state="error", progress=str(e)[:200])
             log_status(vid, f"Movie Index error: {str(e)[:200]}")
 
     background_tasks.add_task(_work)
