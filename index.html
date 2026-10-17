@@ -931,7 +931,7 @@ select option { background: #0e1730; color: #eef2ff; }
                         <input type="hidden" id="logoPosition" value="TOP LEFT">
                     </div>
 
-                    <div>
+                    <div id="autoOutBlock">
                         <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">Output Aspect Ratio</h4>
                         <div class="grid grid-cols-3 gap-3 mb-3">
                             <label class="cursor-pointer relative"><input type="radio" name="ratio" value="1:1" class="ratio-radio absolute opacity-0" onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">SQUARE</span></div></label>
@@ -3135,6 +3135,16 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             try { updateSubPreview(); } catch (e) {}
             try { mrsUpdateChoices(); } catch (e) {}
         }
+        function uHideDuplicates() {
+            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const lbl = el.closest('label');
+                if (lbl) { lbl.classList.add('simple-hidden'); return; }
+                const box = el.closest('div');
+                if (box) box.classList.add('simple-hidden');
+            });
+        }
 
         async function mrsLoadSystem() {
             // HW encoder status chip (read-only; enable with MRS_HW_ENCODE=1 on the server)
@@ -3294,6 +3304,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         updateOutputResolutionForRatio();
         applyRecapPreset(document.getElementById('recapPreset')?.value || 'series');
         try { uInit(); } catch (e) {}
+        try { uHideDuplicates(); } catch (e) {}
         mrsWzGo(1);
         mrsLoadSystem();
     </script>
