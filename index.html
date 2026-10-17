@@ -1,164 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recap Studio — Auto · Dialogue · Manual</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        body { background: #070b14; color: #e5edf9; font-family: Inter, 'Noto Sans Myanmar', system-ui, sans-serif; }
-        .card { background: #111827; color: #e5edf9; border: 1px solid rgba(148,163,184,.14); border-radius: 18px; box-shadow: 0 18px 65px rgba(0,0,0,.18); }
-        .slider { -webkit-appearance: none; width: 100%; height: 5px; border-radius: 5px; background: #e5e7eb; outline: none; }
-        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid white; box-shadow: 0 0 2px rgba(0,0,0,0.5); }
-        .active-tab { background-color: #2563eb !important; color: white !important; }
-        .ratio-radio:checked + div { border-color: #2563eb; background-color: #eff6ff; }
-        .ratio-radio:checked + div span:first-child { color: #2563eb; }
-        .toggle-checkbox { appearance: none; width: 40px; height: 20px; background: #cbd5e1; border-radius: 20px; position: relative; cursor: pointer; outline: none; transition: background 0.3s; }
-        .toggle-checkbox::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: 0.3s; }
-        .toggle-checkbox:checked { background: #2563eb; }
-        .toggle-checkbox:checked::after { transform: translateX(20px); }
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        
-        /* Subtitle Preview Text Outline Effect */
-        .sub-outline {
-            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000;
-        }
-        /* Focused recap product: hide optional studios and fragile experimental controls. */
-        #legacyTopNav, #tabBtnFinder, #tabBtnStudio, #tabBtnVoice, #tabBtnWriter, #movieFinder, #voiceStudio, #storyWriter { display: none !important; }
-        .grid.grid-cols-4 { grid-template-columns: 1fr !important; }
-        #thumbnailSection { display: none !important; }
-        /* Analysis Engine + Evidence Sync are now first-class cards in the
-           unified workflow (no longer hidden). */
-        .simple-hidden { display: none !important; }
-        /* Option 1 premium workspace: keep the existing IDs and handlers, but
-           group them visually like a real creator application. */
-        #recapStudio { min-height: 100vh; color: #e5edf9; }
-        #recapStudio .max-w-7xl { max-width: 1480px; }
-        #recapStudio .card { background: linear-gradient(145deg, rgba(20,29,48,.96), rgba(11,17,30,.96)); color: #e5edf9; border-color: rgba(148,163,184,.14); }
-        #recapStudio label, #recapStudio h1, #recapStudio h2, #recapStudio h3, #recapStudio h4 { color: #e5edf9; }
-        #recapStudio .text-slate-500, #recapStudio .text-slate-600, #recapStudio .text-slate-700, #recapStudio .text-slate-800 { color: #8d9ab2 !important; }
-        #recapStudio input:not([type=checkbox]):not([type=range]), #recapStudio select, #recapStudio textarea { background: rgba(255,255,255,.045); color: #f8fafc; border-color: rgba(148,163,184,.18); }
-        #recapStudio select option { color: #0f172a; background: #fff; }
-        #recapStudio .bg-white, #recapStudio .bg-slate-50 { background-color: rgba(255,255,255,.045) !important; }
-        #recapStudio .bg-blue-50, #recapStudio .bg-blue-100, #recapStudio .bg-purple-100, #recapStudio .bg-violet-100, #recapStudio .bg-amber-50, #recapStudio .bg-amber-100, #recapStudio .bg-green-50, #recapStudio .bg-green-100 { background-color: rgba(99,102,241,.12) !important; }
-        #recapStudio .text-blue-600, #recapStudio .text-blue-700, #recapStudio .text-purple-600, #recapStudio .text-violet-700, #recapStudio .text-amber-700, #recapStudio .text-green-700 { color: #b9c6ff !important; }
-        #recapStudio .text-blue-900, #recapStudio .text-purple-900, #recapStudio .text-violet-900, #recapStudio .text-amber-900 { color: #dbe4ff !important; }
-        #recapStudio .text-slate-300, #recapStudio .text-slate-400 { color: #9eacc4 !important; }
-        #recapStudio .border-blue-100, #recapStudio .border-blue-200, #recapStudio .border-purple-200, #recapStudio .border-violet-200, #recapStudio .border-amber-200, #recapStudio .border-green-200 { border-color: rgba(129,140,248,.28) !important; }
-        #recapStudio .ratio-radio:checked + div { background-color: rgba(79,70,229,.25) !important; border-color: #818cf8 !important; color: #eef2ff !important; }
-        #recapStudio .ratio-radio + div { color: #aebbd2; background-color: rgba(255,255,255,.035); border-color: rgba(148,163,184,.2); }
-        #recapStudio input[type=file] { color: #dbe4ff !important; }
-        #recapStudio input[type=file]::file-selector-button { background: #334155; color: #f8fafc; border: 0; border-radius: 8px; padding: 6px 10px; margin-right: 8px; }
-        #recapStudio .bg-blue-600, #recapStudio .bg-violet-600, #recapStudio .bg-amber-600 { box-shadow: 0 12px 30px rgba(79,70,229,.25); }
-        #recapStudio .border-blue-200, #recapStudio .border-violet-200, #recapStudio .border-amber-200, #recapStudio .border-slate-200 { border-color: rgba(148,163,184,.18) !important; }
-        #autoToolTab, #manualToolTab, #dialogueToolTab { min-height: 118px; transition: transform .18s, filter .18s, background .18s; }
-        #autoToolTab:hover, #manualToolTab:hover, #dialogueToolTab:hover { transform: translateY(-2px); filter: brightness(1.08); }
-        .workspace-kicker { color:#8ea2c8; letter-spacing:.18em; font-size:10px; font-weight:800; text-transform:uppercase; }
-        .workspace-title { font-size:clamp(1.45rem,3vw,2.4rem); line-height:1.05; font-weight:900; letter-spacing:-.04em; background:linear-gradient(110deg,#fff,#a8b8ff 55%,#6ee7f9); -webkit-background-clip:text; background-clip:text; color:transparent; }
-        .workspace-step { display:flex; align-items:center; gap:9px; min-width:0; color:#7f90af; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
-        .workspace-step i { width:26px; height:26px; display:grid; place-items:center; border-radius:9px; color:#c7d2fe; background:rgba(99,102,241,.14); border:1px solid rgba(129,140,248,.24); }
-        .workspace-step.active { color:#e5edf9; }
-        .workspace-step.active i { color:#fff; background:linear-gradient(135deg,#4f46e5,#06b6d4); border-color:transparent; box-shadow:0 5px 18px rgba(79,70,229,.35); }
-        .workspace-line { height:1px; flex:1; min-width:12px; background:linear-gradient(90deg,rgba(99,102,241,.35),rgba(148,163,184,.08)); }
-        .dialogue-evidence-card { background:linear-gradient(145deg,rgba(44,31,16,.8),rgba(18,24,39,.96)); border:1px solid rgba(251,191,36,.2); }
-        .dialogue-script-preview { max-height:190px; overflow:auto; white-space:pre-wrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; line-height:1.65; color:#cbd5e1; background:rgba(2,6,23,.55); border:1px solid rgba(148,163,184,.14); border-radius:12px; padding:12px; }
-        #autoRecapTool, #dialogueRecapTool, #manualRecapTool { animation: recapFade .2s ease-out; }
-        @keyframes recapFade { from { opacity: .2; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        /* Mobile manual editor: keep the active segment and actions easy to
-           reach with one thumb, while preserving the desktop layout. */
-        @media (max-width: 640px) {
-            body { padding: 8px !important; }
-            #manualTool { padding: 10px !important; border-radius: 16px; }
-            #manualTool .manual-mobile-stack { display: block !important; }
-            #manualTool .manual-mobile-stack > div { margin-bottom: 10px; }
-            #manualSceneList { max-height: 190px !important; display:flex; gap:8px; overflow-x:auto !important; overflow-y:hidden !important; padding-bottom:4px; }
-            #manualSceneList > div { min-width: 190px; flex: 0 0 190px; }
-            #manualVideoPreview { max-height: 245px !important; }
-            #manualWave { height: 46px; }
-            #manualTool button, #manualTool select, #manualTool input { min-height: 42px; }
-            #manualTool .manual-quick { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-            #manualTool .manual-sticky-actions { position:sticky; bottom:8px; z-index:20; background:rgba(255,255,255,.96); padding:8px; border-radius:14px; box-shadow:0 4px 18px rgba(15,23,42,.18); }
-            #manualCandidates button { min-height:34px; }
-        }
-            /* Story Studio / Preview Designer: explicit colours so nothing is white-on-white */
-        #storyStudio .bg-slate-100, #storyStudio .bg-slate-200, #dzCard .bg-slate-100 { background: rgba(255,255,255,.10) !important; color: #e5edf9 !important; border-color: rgba(148,163,184,.35) !important; }
-        #storyStudio .bg-emerald-50, #storyStudio .bg-violet-50, #dzCard .bg-emerald-50 { background: rgba(16,185,129,.16) !important; color: #a7f3d0 !important; border-color: rgba(52,211,153,.45) !important; }
-        #storyStudio .bg-amber-50, #dzCard .bg-amber-50 { background: rgba(245,158,11,.16) !important; color: #fde68a !important; border-color: rgba(251,191,36,.45) !important; }
-        #storyStudio .text-emerald-700, #storyStudio .text-emerald-800, #dzCard .text-emerald-700 { color: #6ee7b7 !important; }
-        #storyStudio .text-violet-700 { color: #c4b5fd !important; }
-        #storyStudio .text-amber-800, #storyStudio .text-amber-700, #dzCard .text-amber-800 { color: #fcd34d !important; }
-        #storyStudio .text-red-500, #storyStudio .text-red-600, #dzCard .text-red-500 { color: #fca5a5 !important; }
-        #storyStudio .border-emerald-200, #storyStudio .border-emerald-300, #storyStudio .border-violet-200, #storyStudio .border-amber-300 { border-color: rgba(148,163,184,.35) !important; }
-        #storyStudio .bg-white, #dzCard .bg-white { background-color: rgba(255,255,255,.07) !important; }
-        #storyStudio select, #dzCard select, #storyStudio input:not([type=checkbox]):not([type=range]):not([type=file]), #dzCard input:not([type=checkbox]):not([type=range]):not([type=file]) { background: #1e293b !important; color: #f8fafc !important; border-color: rgba(148,163,184,.35) !important; }
-        #storyStudio select option, #dzCard select option { background: #1e293b; color: #f8fafc; }
-        #storyStudio button:disabled, #dzCard button:disabled { cursor: not-allowed; }
-        #storyStudio input[type=file], #dzCard input[type=file] { color: #dbe4ff !important; }
-        @font-face { font-family: 'SSPadauk'; src: url('/fonts/Padauk.ttf'); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recap Studio — Analyze Once · Auto · Dialogue · Manual · Story</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+@font-face { font-family: 'SSPadauk'; src: url('/fonts/Padauk.ttf'); }
+
+:root {
+  --bg: #05070f;
+  --surface: rgba(22,30,52,.72);
+  --surface-2: rgba(12,18,32,.72);
+  --line: rgba(148,163,184,.16);
+  --line-strong: rgba(129,140,248,.40);
+  --text: #e8edfb;
+  --muted: #98a6c7;
+  --accent: #6366f1;
+  --accent-2: #22d3ee;
+  --accent-3: #f472b6;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --radius: 20px;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: 'Inter','Noto Sans Myanmar',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:
+    radial-gradient(1200px 820px at 8% -12%, rgba(99,102,241,.32), transparent 56%),
+    radial-gradient(1000px 760px at 102% -4%, rgba(34,211,238,.20), transparent 52%),
+    radial-gradient(980px 720px at 52% 118%, rgba(244,114,182,.18), transparent 58%),
+    var(--bg);
+  background-attachment: fixed;
+}
+::selection { background: rgba(99,102,241,.45); color: #fff; }
+
+/* ===== Top bar ===== */
+.topbar {
+  position: sticky; top: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; padding: 14px 22px;
+  backdrop-filter: blur(16px) saturate(140%);
+  background: linear-gradient(180deg, rgba(8,11,22,.92), rgba(8,11,22,.62));
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 11px; font-weight: 900; font-size: 18px; letter-spacing: -.02em; }
+.brand .logo {
+  width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+  background: linear-gradient(135deg,#6366f1,#22d3ee);
+  box-shadow: 0 8px 24px rgba(79,70,229,.5);
+  color: #fff; font-size: 15px;
+}
+.brand .name {
+  background: linear-gradient(110deg,#ffffff,#a8b8ff 55%,#6ee7f9);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.brand .sub { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.app-main { padding: 22px 18px 64px; }
+
+/* ===== Surfaces ===== */
+.card {
+  background: linear-gradient(160deg, rgba(26,34,58,.78), rgba(10,15,28,.74));
+  border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 22px 60px rgba(0,0,0,.38);
+  backdrop-filter: blur(12px);
+  transition: border-color .2s ease, box-shadow .25s ease, transform .2s ease;
+}
+.card:hover { border-color: var(--line-strong); box-shadow: 0 26px 72px rgba(79,70,229,.20); }
+
+/* ===== Inputs ===== */
+input:not([type=checkbox]):not([type=range]):not([type=file]),
+select, textarea {
+  background: rgba(255,255,255,.05) !important;
+  color: #f3f7ff !important;
+  border: 1px solid rgba(148,163,184,.24) !important;
+  border-radius: 12px !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+input:not([type=checkbox]):not([type=range]):not([type=file]):focus,
+select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.24) !important;
+}
+select option { background: #0e1730; color: #eef2ff; }
+#recapStudio input:not([type=checkbox]):not([type=range]),
+#recapStudio select, #recapStudio textarea { color: #f3f7ff !important; }
+#recapStudio select option { color: #eef2ff !important; background: #0e1730 !important; }
+#recapStudio input[type=file] { color: #cdd7f0 !important; }
+#recapStudio input[type=file]::file-selector-button {
+  background: linear-gradient(135deg,#334155,#1e293b); color: #eef2ff;
+  border: 1px solid rgba(148,163,184,.3); border-radius: 9px;
+  padding: 6px 12px; margin-right: 10px; cursor: pointer;
+}
+
+/* ===== Buttons ===== */
+#recapStudio button { transition: transform .13s ease, box-shadow .2s ease, filter .15s ease; }
+#recapStudio button:hover { filter: brightness(1.09); }
+#recapStudio button:active { transform: translateY(1px); }
+#recapStudio button:disabled { opacity: .55; filter: grayscale(.3); cursor: not-allowed; }
+#recapStudio .bg-blue-700, #recapStudio .bg-blue-600 { background: linear-gradient(135deg,#4f46e5,#2563eb) !important; border-color: transparent !important; }
+#recapStudio .bg-violet-600, #recapStudio .bg-purple-600 { background: linear-gradient(135deg,#8b5cf6,#6d28d9) !important; }
+#recapStudio .bg-amber-600 { background: linear-gradient(135deg,#f59e0b,#d97706) !important; }
+#recapStudio .bg-emerald-600, #recapStudio .bg-green-600 { background: linear-gradient(135deg,#10b981,#059669) !important; }
+#recapStudio .bg-teal-600 { background: linear-gradient(135deg,#14b8a6,#0d9488) !important; }
+#recapStudio .bg-red-600 { background: linear-gradient(135deg,#ef4444,#b91c1c) !important; }
+
+/* ===== Light-tailwind -> dark overrides ===== */
+#recapStudio { min-height: 100vh; color: var(--text); }
+#recapStudio .max-w-7xl { max-width: 1480px; }
+#recapStudio label, #recapStudio h1, #recapStudio h2, #recapStudio h3, #recapStudio h4 { color: #eef2ff; }
+#recapStudio .bg-white, #recapStudio .bg-slate-50, #recapStudio .bg-gray-50 { background-color: rgba(255,255,255,.045) !important; }
+#recapStudio .bg-slate-100, #recapStudio .bg-gray-100 { background-color: rgba(255,255,255,.07) !important; }
+#recapStudio .bg-slate-200 { background-color: rgba(255,255,255,.1) !important; }
+#recapStudio .bg-slate-900 { background-color: #080d1c !important; }
+#recapStudio .bg-black { background-color: #000 !important; }
+#recapStudio .bg-blue-50, #recapStudio .bg-blue-100, #recapStudio .bg-indigo-50, #recapStudio .bg-cyan-50 { background-color: rgba(99,102,241,.15) !important; }
+#recapStudio .bg-violet-50, #recapStudio .bg-violet-100, #recapStudio .bg-purple-50, #recapStudio .bg-purple-100 { background-color: rgba(139,92,246,.15) !important; }
+#recapStudio .bg-amber-50, #recapStudio .bg-amber-100, #recapStudio .bg-yellow-50, #recapStudio .bg-yellow-100 { background-color: rgba(245,158,11,.15) !important; }
+#recapStudio .bg-emerald-50, #recapStudio .bg-green-50, #recapStudio .bg-green-100 { background-color: rgba(16,185,129,.15) !important; }
+#recapStudio .bg-red-50, #recapStudio .bg-red-100 { background-color: rgba(239,68,68,.15) !important; }
+#recapStudio .bg-sky-50, #recapStudio .bg-sky-100 { background-color: rgba(14,165,233,.16) !important; }
+#recapStudio .text-slate-500, #recapStudio .text-slate-600, #recapStudio .text-slate-700,
+#recapStudio .text-slate-800, #recapStudio .text-gray-500, #recapStudio .text-gray-600 { color: #9aa7c7 !important; }
+#recapStudio .text-slate-300, #recapStudio .text-slate-400 { color: #aab6d4 !important; }
+#recapStudio .text-blue-600, #recapStudio .text-blue-700, #recapStudio .text-purple-600,
+#recapStudio .text-violet-700, #recapStudio .text-indigo-600 { color: #aeb8ff !important; }
+#recapStudio .text-blue-900, #recapStudio .text-purple-900, #recapStudio .text-violet-900,
+#recapStudio .text-indigo-900 { color: #cbd3ff !important; }
+#recapStudio .text-amber-700, #recapStudio .text-amber-800 { color: #fcd34d !important; }
+#recapStudio .text-emerald-700, #recapStudio .text-emerald-600, #recapStudio .text-green-700 { color: #6ee7b7 !important; }
+#recapStudio .text-red-500, #recapStudio .text-red-600 { color: #fca5a5 !important; }
+#recapStudio .border-blue-100, #recapStudio .border-blue-200, #recapStudio .border-purple-200,
+#recapStudio .border-violet-100, #recapStudio .border-violet-200, #recapStudio .border-amber-200,
+#recapStudio .border-slate-200, #recapStudio .border-gray-200 { border-color: var(--line) !important; }
+#recapStudio hr { border-color: var(--line); }
+
+/* ===== Workflow stepper ===== */
+.workspace-step {
+  position: relative; display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 999px; font-weight: 800; font-size: 12px;
+  color: var(--muted); background: rgba(255,255,255,.04);
+  border: 1px solid var(--line); white-space: nowrap;
+  transition: all .2s ease;
+}
+.workspace-step.active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(34,211,238,.28));
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 1px rgba(99,102,241,.35), 0 10px 30px rgba(79,70,229,.35);
+}
+.workspace-line { flex: 1 1 auto; height: 1px; min-width: 12px; background: linear-gradient(90deg, transparent, var(--line-strong), transparent); }
+
+/* ===== Toggles / sliders / radios ===== */
+#recapStudio input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+#recapStudio input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)); outline: none; }
+#recapStudio input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--accent); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.5); }
+#recapStudio input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); cursor: pointer; }
+.ratio-radio + div { color: #aebbd2; background-color: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 10px; }
+.ratio-radio:checked + div { background-color: rgba(99,102,241,.28) !important; border-color: var(--line-strong) !important; color: #fff; }
+.active-tab { background: linear-gradient(135deg,#4f46e5,#2563eb) !important; color: #fff !important; }
+
+/* ===== Component hooks ===== */
+.simple-hidden { display: none !important; }
+.sub-outline { border: 1px dashed var(--line-strong); }
+.dialogue-evidence-card { background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.dialogue-script-preview { background: rgba(255,255,255,.04); }
+#storyStudio, #dzCard { color: var(--text); }
+.modal { display: none; position: fixed; inset: 0; z-index: 90; background: rgba(3,6,16,.72);
+  backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px; }
+.modal > div { background: linear-gradient(160deg, rgba(26,34,58,.98), rgba(10,15,28,.98)); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 30px 90px rgba(0,0,0,.6); }
+
+/* ===== Scrollbars ===== */
+* { scrollbar-width: thin; scrollbar-color: rgba(129,140,248,.5) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#4f46e5,#0891b2); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+
+@media (max-width: 640px) {
+  .app-main { padding: 14px 10px 60px; }
+  .topbar { padding: 12px 14px; }
+  #recapStudio .grid { grid-template-columns: 1fr !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+</style>
 </head>
-<body class="p-4 md:p-8">
-
-    <div id="legacyTopNav" class="max-w-7xl mx-auto mb-5">
-        <div class="grid grid-cols-4 gap-2">
-            <button id="tabBtnFinder" onclick="switchTab('finder')" class="py-3 rounded-xl font-bold text-sm bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all"><i class="fa-solid fa-clapperboard mr-1"></i>FINDER</button>
-            <button id="tabBtnStudio" onclick="switchTab('studio')" class="py-3 rounded-xl font-bold text-sm bg-white text-slate-500 shadow transition-all"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>RECAP</button>
-            <button id="tabBtnVoice" onclick="switchTab('voice')" class="py-3 rounded-xl font-bold text-sm bg-white text-slate-500 shadow transition-all"><i class="fa-solid fa-microphone mr-1"></i>VOICE</button>
-            <button id="tabBtnWriter" onclick="switchTab('writer')" class="py-3 rounded-xl font-bold text-sm bg-white text-slate-500 shadow transition-all"><i class="fa-solid fa-pen-nib mr-1"></i>STORY</button>
-        </div>
-    </div>
-
-    <!-- ============ MOVIE FINDER ============ -->
-    <div id="movieFinder" class="max-w-7xl mx-auto">
-
-        <div class="card p-4 mb-4">
-            <div class="flex gap-2">
-                <input id="finderSearch" placeholder="ရုပ်ရှင် အမည် / မြန်မာလိုပင် ရေးလို့ရသည် (AI မှ ရှာပေးမည်)" class="flex-1 border border-slate-200 p-3 rounded-lg text-sm" onkeydown="if(event.key==='Enter')aiSearch()">
-                <button onclick="aiSearch()" id="aiSearchBtn" class="bg-blue-700 hover:bg-blue-800 text-white px-4 rounded-lg font-bold text-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
-                <button onclick="refreshFinder()" id="refreshBtn" class="bg-slate-100 text-slate-600 px-3 rounded-lg" title="Trending အသစ်ဆွဲ"><i class="fa-solid fa-rotate"></i></button>
-            </div>
-            <div class="flex gap-2 mt-3 overflow-x-auto pb-1">
-                <button onclick="setCat('all', this)" class="cat-btn active-tab bg-blue-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">အားလုံး</button>
-                <button onclick="setCat('ai_movie', this)" class="cat-btn bg-slate-100 text-slate-500 text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">AI ရုပ်ရှင်</button>
-                <button onclick="setCat('china_drama', this)" class="cat-btn bg-slate-100 text-slate-500 text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">တရုတ်</button>
-                <button onclick="setCat('animation', this)" class="cat-btn bg-slate-100 text-slate-500 text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">အန်နီမေးရှင်း</button>
-                <button onclick="setCat('movie', this)" class="cat-btn bg-slate-100 text-slate-500 text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">ရုပ်ရှင် (Trending)</button>
-            </div>
-        </div>
-
-        <div id="finderStatus" class="text-[11px] text-slate-400 mb-3 px-1"></div>
-
-        <div id="activeDownloads" class="card p-4 mb-4 hidden">
-            <h3 class="font-bold text-sm mb-3"><i class="fa-solid fa-tasks text-blue-600 mr-2"></i>DOWNLOAD / RECAP အခြေအနေ</h3>
-            <div id="downloadList" class="space-y-3"></div>
-        </div>
-
-        <div id="livePreviewPanel" class="card p-4 mb-4 hidden border-l-4 border-purple-500">
-            <h3 class="font-bold text-sm mb-2"><i class="fa-solid fa-tv text-purple-600 mr-2"></i>LIVE PREVIEW <span class="text-[10px] text-slate-400 font-normal">(recap လုပ်နေတဲ့ ဇာတ်ကား)</span></h3>
-            <div id="livePreviewEmbed" class="rounded overflow-hidden bg-black"></div>
-            <div id="livePreviewLog" class="text-[11px] text-blue-500 font-mono mt-2"></div>
-        </div>
-
-        <div id="resultPreviewPanel" class="card p-4 mb-4 hidden border-2 border-green-400">
-            <h3 class="font-bold text-sm mb-2"><i class="fa-solid fa-circle-check text-green-600 mr-2"></i>RECAP VIDEO အသစ်</h3>
-            <div id="resultPreviewEmbed" class="rounded overflow-hidden bg-black"></div>
-        </div>
-
-        <div id="searchResults" class="mb-4 hidden">
-            <h3 class="font-bold text-sm mb-3 px-1"><i class="fa-solid fa-robot text-blue-600 mr-2"></i>AI ရှာဖွေမှုရလဒ်များ <button onclick="document.getElementById('searchResults').classList.add('hidden')" class="text-slate-400 text-xs ml-2"><i class="fa-solid fa-xmark"></i> ပိတ်</button></h3>
-            <div id="searchResultsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        </div>
-
-        <div id="movieGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        <div id="finderEmpty" class="text-center text-slate-400 text-sm py-16 hidden">
-            <i class="fa-solid fa-film text-4xl mb-3 block text-slate-300"></i>
-            ရုပ်ရှင်များ မရှိသေးပါ။ <button onclick="refreshFinder()" class="text-blue-600 font-bold">Refresh</button> နှိပ်ပါ။
-        </div>
-    </div>
-
-    <!-- ============ RECAP STUDIO (original) ============ -->
-    <div id="recapStudio" class="hidden recap-shell">
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo"><i class="fa-solid fa-film"></i></span>
+    <span>
+      <span class="name">Recap Studio</span><br>
+      <span class="sub">Analyze Once · Auto · Dialogue · Manual · Story</span>
+    </span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span class="workspace-step" title="AWS Bedrock / Gemini"><i class="fa-solid fa-bolt"></i> Fast Engine</span>
+  </div>
+</header>
+<main class="app-main">
+<div id="recapStudio" class="studio-shell">
         <div class="max-w-7xl mx-auto mb-6">
             <div class="workspace-kicker mb-2">Creator workspace · source-grounded video recap</div>
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
@@ -1217,213 +1272,9 @@
             </button>
         </div>
     </div>
+</main>
+<script>
 
-    <!-- ============ VOICE STUDIO ============ -->
-    <div id="voiceStudio" class="hidden max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Left: Create Voice Clone -->
-            <div class="card p-6">
-                <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-wand-magic-sparkles text-purple-600 mr-2"></i>Voice Clone ဖန်တီးရန်</h3>
-                <p class="text-xs text-slate-500 mb-4">Audio sample (6+ sec) ထည့်ပြီး သင့်အသံ clone ကို F5-TTS နဲ့ ဖန်တီးပါ။ Burmese, English, Thai + ဘာသာ ၃၀ ထောက်ပံ့ပါတယ်။</p>
-
-                <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-xs text-green-700 mb-4">
-                    <i class="fa-solid fa-circle-check mr-1"></i>
-                    <b>F5-TTS</b> — OpenBMB ရဲ့ open-source voice clone model (Apache-2.0)။ HF Space GPU ကို API ခေါ်သုံးတာဖြစ်လို့ server မှာ GPU မလိုဘူး။
-                </div>
-
-                <div class="space-y-3">
-                    <input id="vsVoiceName" placeholder="Voice name (ဥပမာ: ကိုအောင်)" class="w-full border border-slate-200 p-3 rounded-lg text-sm">
-
-                    <div class="flex gap-2">
-                        <button onclick="vsSetProvider('f5-tts', this)" id="vsProviderVox" class="vs-provider-btn flex-1 py-2 text-xs font-bold rounded-lg bg-purple-600 text-white border-2 border-purple-600">F5-TTS (Clone)</button>
-                        <button onclick="vsSetProvider('voxcpm2', this)" id="vsProviderVoxCPM" class="vs-provider-btn flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-500 border-2 border-slate-200">VoxCPM2 (မြန်မာ)</button>
-                        <button onclick="vsSetProvider('edge-tts', this)" id="vsProviderEdge" class="vs-provider-btn flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-500 border-2 border-slate-200">Edge-TTS (Free)</button>
-                    </div>
-
-                    <!-- F5-TTS options -->
-                    <div id="vsVoxOpts">
-                        <label class="text-xs text-slate-500 block mb-1">🎤 Reference Audio ထည့်ပါ (6+ sec, ဆူညံမှုမရှိ):</label>
-                        <input id="vsSampleFile" type="file" accept="audio/*" class="w-full border border-slate-200 p-2 rounded-lg text-sm">
-                        <div class="text-[10px] text-slate-400 mt-1">WAV, MP3, M4A — 6 စက္ကန့်ကနေ 30 စက္ကန့်အထိ ကောင်းတယ်</div>
-                    </div>
-
-                    <!-- Edge-TTS options -->
-                    <div id="vsEdgeOpts" class="hidden">
-                        <select id="vsEdgeVoice" class="w-full border border-slate-200 p-3 rounded-lg text-sm">
-                            <option value="ms-MM-MintheNeural">Minthe (Myanmar female)</option>
-                            <option value="ms-MM-ThihaNeural">Thiha (Myanmar male)</option>
-                            <option value="my-MM-NilarNeural">Nilar (Myanmar female)</option>
-                            <option value="my-MM-ThihaNeural">Thiha (Myanmar male)</option>
-                            <option value="th-TH-PremwadeeNeural">Thai female</option>
-                            <option value="vi-VN-HoaiMyNeural">Vietnamese female</option>
-                            <option value="en-US-AvaNeural">English female (Ava)</option>
-                            <option value="en-US-AndrewNeural">English male (Andrew)</option>
-                            <option value="en-US-JennyNeural">English female (Jenny)</option>
-                            <option value="en-US-GuyNeural">English male (Guy)</option>
-                            <option value="ja-JP-NanamiNeural">Japanese female</option>
-                            <option value="zh-CN-XiaoxiaoNeural">Chinese female</option>
-                        </select>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400">Speed</label>
-                                <input id="vsEdgeRate" type="range" min="-50" max="50" value="0" class="slider">
-                                <span id="vsEdgeRateVal" class="text-[10px] text-slate-400">+0%</span>
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400">Pitch</label>
-                                <input id="vsEdgePitch" type="range" min="-20" max="20" value="0" class="slider">
-                                <span id="vsEdgePitchVal" class="text-[10px] text-slate-400">+0Hz</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="vsCreateVoice()" id="vsCreateBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-sm">
-                        <i class="fa-solid fa-plus mr-1"></i>Voice ဖန်တီးရန်
-                    </button>
-                </div>
-            </div>
-
-            <!-- Right: Generate TTS -->
-            <div class="card p-6">
-                <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-headphones text-green-600 mr-2"></i>Text → Speech ထုတ်ရန်</h3>
-                <p class="text-xs text-slate-500 mb-4">ဘယ် voice နဲ့မဆို text ထည့်ပြီး အသံထုတ်ပါ။ Unlimited text length ထောက်ပံ့ပါတယ်။</p>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs text-slate-500 block mb-1">Voice ရွေးပါ:</label>
-                        <select id="vsGenVoice" class="w-full border border-slate-200 p-3 rounded-lg text-sm">
-                            <option value="">-- Voice ရွေးပါ --</option>
-                        </select>
-                    </div>
-                    <textarea id="vsGenText" rows="8" placeholder="Text ထည့်ပါ (သို့) .txt file upload လုပ်ပါ...&#10;&#10;Audiobook: ဇာတ်လမ်းတစ်အုပ်လုံး ၊ အခန်းတစ်ခန်းချင်းစီ ထည့်လို့ရပါတယ်..." class="w-full border border-slate-200 p-3 rounded-lg text-sm resize-none"></textarea>
-                    <div class="flex items-center justify-between">
-                        <label class="text-[10px] text-blue-600 cursor-pointer hover:underline"><i class="fa-solid fa-file-import mr-1"></i>.txt / .md file ထည့်ရန် (Audiobook)<input type="file" id="vsGenFile" accept=".txt,.md,.srt" class="hidden" onchange="vsLoadGenFile(this)"></label>
-                        <span class="text-[10px] text-slate-400"><span id="vsCharCount">0</span> chars — Unlimited</span>
-                    </div>
-                    <button onclick="vsGenerateSpeech()" id="vsGenBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl text-sm">
-                        <i class="fa-solid fa-volume-high mr-1"></i>အသံထုတ်ရန်
-                    </button>
-                </div>
-
-                <!-- Audio Player -->
-                <div id="vsPlayerWrap" class="hidden mt-4 bg-slate-50 rounded-xl p-4">
-                    <audio id="vsAudioPlayer" controls class="w-full"></audio>
-                    <div class="flex gap-2 mt-2">
-                        <a id="vsDownloadLink" href="#" download class="flex-1 bg-blue-600 text-white text-center py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-download mr-1"></i>Download</a>
-                        <button onclick="vsCopyText()" class="bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs"><i class="fa-solid fa-copy"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Voice Design (no reference audio) -->
-        <div class="card p-6 mt-6">
-            <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-palette text-orange-500 mr-2"></i>Voice Design (Reference Audio မလို)</h3>
-            <p class="text-xs text-slate-500 mb-4">F5-TTS က description ကနေ voice အသစ်ဖန်တီးပေးတယ်။ Reference audio မလိုဘူး။</p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2">
-                    <textarea id="vsDesignText" rows="3" placeholder="Text to speak..." class="w-full border border-slate-200 p-3 rounded-lg text-sm resize-none"></textarea>
-                </div>
-                <div>
-                    <input id="vsDesignControl" placeholder="Voice description: A warm young woman, gentle tone" class="w-full border border-slate-200 p-3 rounded-lg text-sm mb-2">
-                    <button onclick="vsDesignVoice()" id="vsDesignBtn" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Design Voice
-                    </button>
-                </div>
-            </div>
-            <div id="vsDesignPlayer" class="hidden mt-4 bg-slate-50 rounded-xl p-4">
-                <audio id="vsDesignAudio" controls class="w-full"></audio>
-                <a id="vsDesignDownload" href="#" download class="block mt-2 bg-blue-600 text-white text-center py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-download mr-1"></i>Download</a>
-            </div>
-        </div>
-
-        <!-- Saved Voices List -->
-        <div class="card p-6 mt-6">
-            <h3 class="font-bold text-lg mb-4"><i class="fa-solid fa-list text-blue-600 mr-2"></i>သိမ်းထားသည့် Voices</h3>
-            <div id="vsVoicesList" class="text-xs text-slate-400">Loading...</div>
-
-            <div class="mt-4 border-t border-slate-100 pt-4">
-                <p class="text-[11px] text-slate-500 mb-2"><i class="fa-solid fa-shield-halved text-green-600 mr-1"></i><b>Voice တွေ မပျောက်အောင် Back up:</b><br>File သစ် Update တင်တိုင်း Space rebuild ဖြစ်ပြီး voice တွေ ပျောက်သွားတတ်ပါတယ်။ Update မတင်ခင် "Backup" နှိပ်ပြီး zoom ကို သိမ်းပါ။ နောက်တစ်ခါ Update တင်တဲ့အခါ အဲဒီ zip ကို file တွေနဲ့အတူ ပြန်တင်ပေးပါ — startup မှာ ပြန်အလိုအလျောက် restore လုပ်ပေးပါမယ်။ (ဖျက်မှသာ ပျောက်မယ်၊ မဖျက်ရင် တည်မြဲနေသည်)</p>
-                <div class="flex gap-2">
-                    <button onclick="vsBackup()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl text-xs"><i class="fa-solid fa-file-zipper mr-1"></i>Backup Voices (zip download)</button>
-                    <label class="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs text-center cursor-pointer"><i class="fa-solid fa-file-arrow-up mr-1"></i>Restore Voices<input type="file" accept=".zip" class="hidden" onchange="vsRestore(this)"></label>
-                </div>
-                <div id="vsBackupMsg" class="text-[10px] text-slate-400 mt-2"></div>
-            </div>
-        </div>
-
-        <!-- Generated Audio Library (Audiobook files) -->
-        <div class="card p-6 mt-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-book-open text-rose-600 mr-2"></i>ထုတ်ပြီးသား Audiobook အသံဖိုင်များ</h3>
-                <button onclick="loadAudioLibrary()" class="text-xs text-slate-500 hover:text-slate-700"><i class="fa-solid fa-rotate mr-1"></i>Refresh</button>
-            </div>
-            <p class="text-[11px] text-slate-400 mb-3">ထုတ်ပြီးသား အသံဖိုင်တွေ အကုန်ဒီမှာ ရှိတယ်။ ပြန်နားထောင်လို့ရ၊ download လုပ်လို့ရတယ်။ ဖိုင်ကို နှိပ်ပြီး ဖျက်လို့လည်း ရတယ်။ (Space ကို update လုပ်တဲ့အခါ runtime ဖိုင်တွေ ရှင်းသွားတတ်တာမို့ အရေးကြီးတဲ့ ဖိုင်ကို အရင်ဆုံး download လုပ်ထားပါ)</p>
-            <div id="vsLibraryList" class="text-xs text-slate-400">Loading...</div>
-        </div>
-    </div>
-
-    <!-- ============ STORY WRITER ============ -->
-    <div id="storyWriter" class="hidden max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Left: New story form -->
-            <div class="card p-6">
-                <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-pen-nib text-teal-600 mr-2"></i>စာရေးဆရာ — ဝတ္ထု/စာအုပ် အသစ်ရေးရန်</h3>
-                <p class="text-xs text-slate-500 mb-4">ကမ္ဘာကျော် စာရေးဆရာကြီးများရဲ့ စတိုင်/အရေးအသားပုံစံနဲ့ ဇာတ်လမ်းတစ်ပုဒ်လုံး အခန်းလိုက် ရေးပေးတယ်။ ဘာသာစကား မြန်မာ/English နှစ်မျိုးလုံး ထောက်ပံ့ပါတယ်။</p>
-
-                <div class="space-y-3">
-                    <input id="swTitle" placeholder="စာအုပ် ခေါင်းစဉ် (Title)" class="w-full border border-slate-200 p-3 rounded-lg text-sm">
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="swAuthor" class="w-full border border-slate-200 p-3 rounded-lg text-sm">
-                            <option value="">-- Author ရွေးပါ --</option>
-                        </select>
-                        <select id="swGenre" class="w-full border border-slate-200 p-3 rounded-lg text-sm">
-                            <option value="">-- Category ရွေးပါ --</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[10px] text-slate-400">ဘာသာစကား</label>
-                            <select id="swLang" class="w-full border border-slate-200 p-3 rounded-lg text-sm mt-1">
-                                <option value="my">မြန်မာ</option>
-                                <option value="en">English</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-400">အခန်းအရေအတွက် (Max 200)</label>
-                            <input id="swChapters" type="number" min="1" max="200" value="20" class="w-full border border-slate-200 p-3 rounded-lg text-sm mt-1">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-500 block mb-1">စာရေးဆရာ စတိုင် လေ့လာရန် နမူနာစာအုပ် (Optional .txt)</label>
-                        <input id="swSampleFile" type="file" accept=".txt,.md" class="w-full border border-slate-200 p-2 rounded-lg text-sm">
-                        <div class="text-[10px] text-slate-400 mt-1">ဆရာရဲ့ အရေးအသားပုံစံ သိကျွမ်းစေဖို့ သူ့စာတစ်စောင် upload လုပ်ပေးနိုင်တယ် (ရော်လိုရေးလို)</div>
-                    </div>
-                    <button onclick="swCreate()" id="swCreateBtn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl shadow-lg text-sm">
-                        <i class="fa-solid fa-feather mr-1"></i>စာအုပ် စရေးရန်
-                    </button>
-                </div>
-            </div>
-
-            <!-- Right: Progress -->
-            <div class="card p-6">
-                <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-hourglass-half text-orange-500 mr-2"></i>ရေးနေတဲ့ အခြေအနေ</h3>
-                <div id="swActiveBox" class="text-xs text-slate-400">စာအုပ်အသစ် မစတင်ရသေးပါ</div>
-            </div>
-        </div>
-
-        <!-- Story Library -->
-        <div class="card p-6 mt-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg"><i class="fa-solid fa-book text-blue-600 mr-2"></i>ချထားပြီး စာအုပ်များ</h3>
-                <button onclick="loadStoryLibrary()" class="text-xs text-slate-500 hover:text-slate-700"><i class="fa-solid fa-rotate mr-1"></i>Refresh</button>
-            </div>
-            <p class="text-[11px] text-slate-400 mb-3">ပြီးတဲ့စာအုပ်ကို <b>Text</b> (မူရင်း) သို့မဟုတ် <b>Narration</b> (အသံထုတ်ရန် သန့်စင်ထားတာ) အနေနဲ့ download လုပ်လို့ရတယ်။ Narration ကို VOICE tab မှာ ထည့်ပြီး audiobook အသံထုတ်နိုင်တယ်။</p>
-            <div id="swLibraryList" class="text-xs text-slate-400">Loading...</div>
-        </div>
-    </div>
-
-    <script>
         let selectedFile = null; let logInterval = null;
 
         function handleFileSelect(e, nameId, previewId) {
@@ -1650,7 +1501,7 @@
         }
 
         window.onload = () => { 
-            setVoiceType('edge', document.querySelector('.active-tab')); 
+            setVoiceType('edge', document.querySelector('.voice-btn.active-tab')); 
             fetchCompletedFiles(); 
             fetchFonts();
             fetchPastJobs();
@@ -2180,7 +2031,8 @@
 
         const CAT_LABELS = { ai_movie: 'AI', china_drama: 'တရုတ်', animation: 'Animation', movie: 'Movie' };
 
-        function switchTab(tab) {
+        function switchTab(tab) { return; } /* legacy nav removed */
+        function _legacySwitchTab(tab) {
             const finder = document.getElementById('movieFinder');
             const studio = document.getElementById('recapStudio');
             const voice = document.getElementById('voiceStudio');
