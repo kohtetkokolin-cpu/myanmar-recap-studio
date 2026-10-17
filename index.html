@@ -361,7 +361,7 @@ select option { background: #0e1730; color: #eef2ff; }
                     <label class="text-[11px] font-bold text-slate-500 block">Recap length (% of part)<input id="pjRatio" type="number" min="10" max="90" value="40" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></label>
                     <label class="text-[11px] font-bold text-slate-500 block">(သို့) part တစ်ခု မိနစ် (0=% သုံး)<input id="pjTargetMin" type="number" min="0" max="60" step="0.5" value="0" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></label>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div id="pjVoiceRow" class="grid grid-cols-3 gap-2">
                     <label class="text-[11px] font-bold text-slate-500 block">Narrator<select id="pjNarrator" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></select></label>
                     <label class="text-[11px] font-bold text-slate-500 block">ကျား<select id="pjMale" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></select></label>
                     <label class="text-[11px] font-bold text-slate-500 block">မ<select id="pjFemale" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></select></label>
@@ -486,7 +486,7 @@ select option { background: #0e1730; color: #eef2ff; }
                     <label class="flex items-center justify-between bg-amber-50 border border-amber-300 rounded p-3 text-[11px] font-bold text-amber-800">Pilot (၃ မိနစ်နမူနာ)
                         <input id="ssPilot" type="checkbox" checked class="w-4 h-4"></label>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div id="ssVoiceRow" class="grid grid-cols-3 gap-2">
                     <label class="text-[11px] font-bold text-slate-500 block">Narrator<select id="ssNarrator" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></select></label>
                     <label class="text-[11px] font-bold text-slate-500 block">ကျား<select id="ssMale" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></select></label>
                     <label class="text-[11px] font-bold text-slate-500 block">မ<select id="ssFemale" class="w-full mt-1 border rounded p-2 font-normal text-slate-700"></select></label>
@@ -3188,7 +3188,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         }
 
         function uHideDuplicates() {
-            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur', 'dialogueMaleVoice', 'dialogueFemaleVoice', 'ssMale', 'ssFemale', 'pjMale', 'pjFemale'].forEach(function (id) {
+            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur', 'dialogueMaleVoice', 'dialogueFemaleVoice', 'ssMale', 'ssFemale', 'pjMale', 'pjFemale', 'ssVoiceRow', 'pjVoiceRow'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 const lbl = el.closest('label');
