@@ -217,72 +217,78 @@ select option { background: #0e1730; color: #eef2ff; }
         <div class="max-w-7xl mx-auto mb-6">
             <div class="workspace-kicker mb-2">Creator workspace · source-grounded video recap</div>
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-                <div><h1 class="workspace-title">Recap Studio</h1><p class="text-xs text-slate-400 mt-2 max-w-2xl">Upload once, shape the story, preview the exact voice-and-scene result, then export.</p></div>
-                <span class="inline-flex items-center gap-2 text-[10px] font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-300/20 rounded-full px-3 py-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>LOCAL SYNC READY</span>
+                <div><h1 class="workspace-title">Recap Studio</h1><p class="text-xs text-slate-400 mt-2 max-w-2xl">Upload once → Analyze once → shape the story → preview → export။</p></div>
+                <div class="flex items-center gap-2">
+                    <span id="mrsIndexChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">Analyze-once: —</span>
+                    <span id="mrsHwChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">CPU encode</span>
+                </div>
             </div>
-            <div class="mt-5 flex items-center gap-2 md:gap-4 overflow-x-auto pb-1">
-                <div class="workspace-step active"><i class="fa-solid fa-cloud-arrow-up"></i><span>Source</span></div><div class="workspace-line"></div>
-                <div class="workspace-step active"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Story</span></div><div class="workspace-line"></div>
-                <div class="workspace-step"><i class="fa-solid fa-microphone-lines"></i><span>Voice</span></div><div class="workspace-line"></div>
-                <div class="workspace-step"><i class="fa-solid fa-film"></i><span>Preview</span></div><div class="workspace-line"></div>
-                <div class="workspace-step"><i class="fa-solid fa-download"></i><span>Export</span></div>
+            <div id="mrsStepStrip" class="mt-5 flex items-center gap-1 md:gap-2 overflow-x-auto pb-1">
+                <div class="workspace-step" data-step="1"><i class="fa-solid fa-cloud-arrow-up"></i><span>Source</span></div><div class="workspace-line"></div>
+                <div class="workspace-step" data-step="2"><i class="fa-solid fa-magnifying-glass-chart"></i><span>Analyze</span></div><div class="workspace-line"></div>
+                <div class="workspace-step" data-step="3"><i class="fa-solid fa-layer-group"></i><span>Format</span></div><div class="workspace-line"></div>
+                <div class="workspace-step" data-step="4"><i class="fa-solid fa-sliders"></i><span>Configure</span></div><div class="workspace-line"></div>
+                <div class="workspace-step" data-step="5"><i class="fa-solid fa-download"></i><span>Export</span></div>
             </div>
         </div>
+
         <div class="max-w-7xl mx-auto mb-5">
-            <!-- Unified workflow header: one guided flow (Source → Analyze Once → Shape → Preview → Export) -->
-            <div class="card p-4 mb-4">
-                <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
-                    <div class="text-[11px] font-bold tracking-widest text-indigo-300 uppercase"><i class="fa-solid fa-diagram-project mr-1"></i>Unified Recap Workflow</div>
-                    <div class="flex items-center gap-2">
-                        <span id="mrsIndexChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">Analyze-once: —</span>
-                        <span id="mrsHwChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">CPU encode</span>
+            <!-- Wizard nav -->
+            <div class="flex items-center justify-between gap-3 mb-4">
+                <button type="button" id="wzBack" onclick="mrsWzGo(MRS_WZ_STEP-1)" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-arrow-left mr-1"></i>နောက်ပြန်</button>
+                <div id="wzTitle" class="text-xs font-bold text-indigo-200 flex-1 text-center">Step 1 · Source &amp; Analyze Once</div>
+                <button type="button" id="wzNext" onclick="mrsWzGo(MRS_WZ_STEP+1)" class="bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold">ရှေ့ဆက်<i class="fa-solid fa-arrow-right ml-1"></i></button>
+            </div>
+
+            <!-- Step 1 · Source & Analyze Once -->
+            <div id="wzStep1" class="wz-step">
+                <div class="card p-4 mb-4 border-l-4 border-teal-500">
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                        <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-magnifying-glass-chart text-teal-400 mr-2"></i>Source &amp; Analyze Once</h3>
+                        <span id="mrsIndexStatus" class="text-[10px] text-slate-400">source ကို တစ်ခါ index လုပ်ထားရင် နောက် run တွေမှာ Whisper/scene-detect ကျော်ပါမယ်</span>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <input id="mrsIndexFile" type="file" accept="video/*" class="flex-1 text-xs bg-white border rounded p-2">
+                        <button type="button" id="mrsIndexBuildBtn" onclick="mrsBuildIndex()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-bolt mr-1"></i>Analyze Once</button>
+                        <button type="button" onclick="mrsLoadIndexList()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold" title="Index list ပြန်ဆွဲ"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2"><i class="fa-solid fa-circle-info mr-1"></i>Movie Index တစ်ခါ ဆောက်ထားရင် Auto / Dialogue / Story အားလုံး analysis ကို ပြန်သုံးပါမယ် (zero re-analysis)။</p>
+                    <div id="mrsIndexList" class="mt-2 text-[11px] text-slate-400 space-y-1"></div>
+                </div>
+            </div>
+
+            <!-- Step 2 · Output Format -->
+            <div id="wzStep2" class="wz-step hidden">
+                <div class="text-[11px] font-bold tracking-widest text-indigo-300 uppercase mb-2"><i class="fa-solid fa-layer-group mr-1"></i>Output Format ရွေးပါ</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    <button type="button" id="autoToolTab" onclick="switchRecapTool('auto')" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🤖 Auto Recap</button>
+                    <button type="button" id="dialogueToolTab" onclick="switchRecapTool('dialogue')" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🎙 Dialogue / Dubbing</button>
+                    <button type="button" id="manualToolTab" onclick="switchRecapTool('manual')" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🛠 Manual Review</button>
+                    <button type="button" id="storyToolTab" onclick="switchRecapTool('story')" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">📚 Story Studio</button>
+                </div>
+                <div class="card p-4 mb-4 border-l-4 border-amber-500">
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                        <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>Fair-use Transform</h3>
+                        <span class="text-[10px] text-slate-400">transform ကို Auto toggles + Designer ဆီ ချိတ်ပေးမယ် (ဥပဒေအာမခံ မဟုတ်)</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
+                        <label class="text-[11px] font-bold text-slate-500">Transform preset
+                            <select id="mrsFairUsePreset" class="w-full mt-1 border rounded p-2 text-xs font-normal" onchange="mrsApplyFairUse(this.value)"></select>
+                        </label>
+                        <div id="mrsFairUseHelp" class="text-[10px] text-slate-400 pb-2"></div>
                     </div>
                 </div>
-                <div id="mrsStepStrip" class="flex items-center gap-1 md:gap-2 overflow-x-auto pb-1">
-                    <div class="workspace-step" data-step="1"><i class="fa-solid fa-cloud-arrow-up"></i><span>Source</span></div><div class="workspace-line"></div>
-                    <div class="workspace-step" data-step="2"><i class="fa-solid fa-magnifying-glass-chart"></i><span>Analyze Once</span></div><div class="workspace-line"></div>
-                    <div class="workspace-step" data-step="3"><i class="fa-solid fa-sliders"></i><span>Shape</span></div><div class="workspace-line"></div>
-                    <div class="workspace-step" data-step="4"><i class="fa-solid fa-film"></i><span>Preview</span></div><div class="workspace-line"></div>
-                    <div class="workspace-step" data-step="5"><i class="fa-solid fa-download"></i><span>Export</span></div>
-                </div>
             </div>
 
-            <!-- Workflow mode selector -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-                <button type="button" id="autoToolTab" onclick="switchRecapTool('auto')" title="Auto analysis, narration and render" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🤖 Auto Recap</button>
-                <button type="button" id="dialogueToolTab" onclick="switchRecapTool('dialogue')" title="Dialogue translation + multi-voice" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🎙 Dialogue / Dubbing</button>
-                <button type="button" id="manualToolTab" onclick="switchRecapTool('manual')" title="Review every scene mapping by hand" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🛠 Manual Review</button>
-                <button type="button" id="storyToolTab" onclick="switchRecapTool('story')" title="Long-form audio-first story retelling" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">📚 Story Studio</button>
-            </div>
-
-            <!-- Step 2 · Analyze Once (Movie Index) -->
-            <div class="card p-4 mb-4 border-l-4 border-teal-500">
-                <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
-                    <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-magnifying-glass-chart text-teal-400 mr-2"></i>Step 2 · Analyze Once (Movie Index)</h3>
-                    <span id="mrsIndexStatus" class="text-[10px] text-slate-400">source ကို တစ်ခါ index လုပ်ထားရင် နောက် run တွေမှာ Whisper/scene-detect ကျော်ပါမယ်</span>
-                </div>
-                <div class="flex flex-col md:flex-row gap-2">
-                    <input id="mrsIndexFile" type="file" accept="video/*" class="flex-1 text-xs bg-white border rounded p-2">
-                    <button type="button" id="mrsIndexBuildBtn" onclick="mrsBuildIndex()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-bolt mr-1"></i>Analyze Once</button>
-                    <button type="button" onclick="mrsLoadIndexList()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold" title="Index list ပြန်ဆွဲ"><i class="fa-solid fa-rotate"></i></button>
-                </div>
-                <div id="mrsIndexList" class="mt-2 text-[11px] text-slate-400 space-y-1"></div>
-            </div>
-
-            <!-- Step 3 · Fair-use Transform -->
-            <div class="card p-4 mb-4 border-l-4 border-amber-500">
-                <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
-                    <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>Step 3 · Fair-use Transform</h3>
-                    <span class="text-[10px] text-slate-400">transform ကို Dialogue Manual Designer + Auto toggles ဆီ ချိတ်ပေးမယ် (ဥပဒေအာမခံ မဟုတ်)</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
-                    <label class="text-[11px] font-bold text-slate-500">Transform preset
-                        <select id="mrsFairUsePreset" class="w-full mt-1 border rounded p-2 text-xs font-normal" onchange="mrsApplyFairUse(this.value)"></select>
-                    </label>
-                    <div id="mrsFairUseHelp" class="text-[10px] text-slate-400 pb-2"></div>
+            <!-- Step 3 · Configure & Run -->
+            <div id="wzStep3" class="wz-step hidden">
+                <div class="card p-4 mb-4 border-l-4 border-indigo-500 flex items-center justify-between flex-wrap gap-2">
+                    <div class="text-sm font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-400 mr-2"></i>Configure &amp; Run — <span id="wzModeName">Auto Recap</span></div>
+                    <span class="text-[10px] text-slate-400">အောက်မှာ setting ချိန်ပြီး START နှိပ်ပါ။ Movie Index ကို ပြန်သုံးပါမယ်။</span>
                 </div>
             </div>
         </div>
+    
     <section id="storyStudio" class="max-w-7xl mx-auto hidden">
         <div class="mb-3 flex items-center gap-2"><span class="bg-emerald-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">STORY STUDIO</span><span class="text-[11px] text-slate-500">အခန်းခွဲ၊ ဇာတ်လမ်းအစီအစဉ်ချပြီး နားထောင်ရုံနဲ့ စွဲမက်စရာ audio-first ဗီဒီယို (ပုံစံ ၁၀ မျိုး)</span></div>
         
@@ -3999,7 +4005,8 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             if (dt) dt.className = base + (isDialogue ? 'bg-amber-600 border-amber-600 text-white shadow-lg' : OFF);
             if (mt) mt.className = base + (isManual ? 'bg-violet-600 border-violet-600 text-white shadow-lg' : OFF);
             if (st) st.className = base + (isStory ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : OFF);
-            mrsSetStep(3);
+            window.MRS_MODE = tool;
+            mrsWzGo(3);
             if (isManual) document.getElementById('manualVideo')?.focus();
             if (isDialogue) { ddOpenDesigner(); }
             if (isStory) { loadStoryStudio(); if (!document.getElementById('ssProjectBox').classList.contains('hidden')) pjLoadList(); }
@@ -4075,6 +4082,40 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             document.querySelectorAll('#mrsStepStrip .workspace-step').forEach(el => {
                 el.classList.toggle('active', parseInt(el.dataset.step || '0') <= parseInt(n || 1));
             });
+        }
+
+        // ===== Step-by-step wizard =====
+        let MRS_WZ_STEP = 1;
+        window.MRS_MODE = window.MRS_MODE || 'auto';
+        const MRS_MODE_LABEL = { auto: 'Auto Recap', dialogue: 'Dialogue / Dubbing', manual: 'Manual Review', story: 'Story Studio' };
+        function mrsModeSectionId() {
+            const m = window.MRS_MODE || 'auto';
+            return m === 'dialogue' ? 'dialogueRecapTool' : m === 'manual' ? 'manualRecapTool' : m === 'story' ? 'storyStudio' : 'autoRecapTool';
+        }
+        function mrsWzGo(n) {
+            n = parseInt(n, 10); if (isNaN(n)) n = 1;
+            n = Math.max(1, Math.min(3, n));
+            MRS_WZ_STEP = n;
+            for (let i = 1; i <= 3; i++) { const el = document.getElementById('wzStep' + i); if (el) el.classList.toggle('hidden', i !== n); }
+            const showSections = (n === 3);
+            const active = mrsModeSectionId();
+            ['autoRecapTool', 'dialogueRecapTool', 'manualRecapTool', 'storyStudio'].forEach(function (id) {
+                const s = document.getElementById(id); if (!s) return;
+                s.classList.toggle('hidden', !(showSections && id === active));
+            });
+            const title = document.getElementById('wzTitle');
+            const titles = { 1: 'Step 1 · Source & Analyze Once', 2: 'Step 2 · Output Format', 3: 'Step 3 · Configure & Run' };
+            if (title) title.textContent = titles[n] || '';
+            const back = document.getElementById('wzBack'), next = document.getElementById('wzNext');
+            if (back) back.style.visibility = (n <= 1 ? 'hidden' : 'visible');
+            if (next) next.style.visibility = (n >= 3 ? 'hidden' : 'visible');
+            const mn = document.getElementById('wzModeName'); if (mn) mn.textContent = MRS_MODE_LABEL[window.MRS_MODE] || 'Auto Recap';
+            document.querySelectorAll('#mrsStepStrip .workspace-step').forEach(function (el) {
+                const s = parseInt(el.dataset.step || '0', 10);
+                el.classList.toggle('active', (n === 1 ? s <= 2 : n === 2 ? s <= 3 : s <= 4));
+            });
+            try { mrsUpdateChoices(); } catch (e) {}
+            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
         }
 
         let MRS_PRESETS = [];
@@ -4235,7 +4276,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         applySimpleRecapUI();
         updateOutputResolutionForRatio();
         applyRecapPreset(document.getElementById('recapPreset')?.value || 'series');
-        mrsSetStep(3);
+        mrsWzGo(1);
         mrsLoadSystem();
     </script>
 </body>
