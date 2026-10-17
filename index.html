@@ -294,9 +294,17 @@ select option { background: #0e1730; color: #eef2ff; }
 
             <!-- Step 3 · Configure & Run -->
             <div id="wzStep3" class="wz-step hidden">
-                <div class="card p-4 mb-4 border-l-4 border-indigo-500 flex items-center justify-between flex-wrap gap-2">
-                    <div class="text-sm font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-400 mr-2"></i>Configure &amp; Run — <span id="wzModeName">Auto Recap</span></div>
-                    <span class="text-[10px] text-slate-400">အောက်မှာ setting ချိန်ပြီး START နှိပ်ပါ။ Movie Index ကို ပြန်သုံးပါမယ်။</span>
+                <div class="card p-4 mb-4 border-l-4 border-indigo-500">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="text-sm font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-400 mr-2"></i>Configure &amp; Run — <span id="wzModeName">Auto Recap</span></div>
+                        <span class="text-[10px] text-slate-400">အောက်မှာ setting ချိန်ပြီး START နှိပ်ပါ။ Movie Index ကို ပြန်သုံးပါမယ်။</span>
+                    </div>
+                    <div id="wzModeTabs" class="mt-3 flex flex-wrap gap-2">
+                        <button type="button" data-mode="auto" onclick="switchRecapTool('auto')" class="wz-mode-tab text-xs font-bold px-3 py-2 rounded-lg border-2">🤖 Auto</button>
+                        <button type="button" data-mode="dialogue" onclick="switchRecapTool('dialogue')" class="wz-mode-tab text-xs font-bold px-3 py-2 rounded-lg border-2">🎙 Dialogue</button>
+                        <button type="button" data-mode="manual" onclick="switchRecapTool('manual')" class="wz-mode-tab text-xs font-bold px-3 py-2 rounded-lg border-2">🛠 Manual</button>
+                        <button type="button" data-mode="story" onclick="switchRecapTool('story')" class="wz-mode-tab text-xs font-bold px-3 py-2 rounded-lg border-2">📚 Story</button>
+                    </div>
                 </div>
                 <div class="card p-4 mb-4 border-l-4 border-fuchsia-500">
                     <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
@@ -3057,6 +3065,10 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             if (next) next.style.visibility = (n >= 3 ? 'hidden' : 'visible');
             if (next && n === 1) { next.disabled = !window.MRS_SOURCE_FILE; next.classList.toggle('opacity-50', !window.MRS_SOURCE_FILE); }
             const mn = document.getElementById('wzModeName'); if (mn) mn.textContent = MRS_MODE_LABEL[window.MRS_MODE] || 'Auto Recap';
+            document.querySelectorAll('#wzModeTabs .wz-mode-tab').forEach(function (b) {
+                const on = b.dataset.mode === (window.MRS_MODE || 'auto');
+                b.className = 'wz-mode-tab text-xs font-bold px-3 py-2 rounded-lg border-2 ' + (on ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white/5 text-slate-300 border-slate-600');
+            });
             document.querySelectorAll('#mrsStepStrip .workspace-step').forEach(function (el) {
                 const s = parseInt(el.dataset.step || '0', 10);
                 el.classList.toggle('active', (n === 1 ? s <= 2 : n === 2 ? s <= 3 : s <= 4));
