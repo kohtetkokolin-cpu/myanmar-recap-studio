@@ -309,6 +309,9 @@ select option { background: #0e1730; color: #eef2ff; }
                         <label class="text-[11px] font-bold text-slate-500">Narration speed<select id="uSpeed" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushTone()"><option value="1.2">1.2×</option><option value="1.3" selected>1.3×</option><option value="1.4">1.4×</option><option value="1.5">1.5×</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Voice pitch<select id="uPitch" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushTone()"><option value="-1">-1 · Lower</option><option value="0" selected>0 · Natural</option><option value="1">+1 · Higher</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Subtitle font<select id="uFont" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushFont()"><option value="">Default Font (Unicode)</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500 md:col-span-2">Recap length: <span id="uLengthVal">50</span>% of original
+                            <input type="range" id="uLength" min="15" max="90" value="50" class="slider mt-1" oninput="document.getElementById('uLengthVal').innerText=this.value; uPushLength()">
+                        </label>
                         <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold mt-4">Subtitles<input type="checkbox" id="uSubs" class="toggle-checkbox" checked onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub size<input type="number" id="uSubSize" value="24" min="10" max="80" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub color<select id="uSubColor" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option>Yellow</option><option>White</option><option>Green</option><option>Cyan</option></select></label>
@@ -662,7 +665,7 @@ select option { background: #0e1730; color: #eef2ff; }
                         </select>
                     </div>
 
-                    <div>
+                    <div id="autoLengthBlock">
                         <div class="flex justify-between items-center">
                             <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-scissors text-blue-500 mr-2"></i>Recap Length</h4>
                             <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold"><span id="recapRatioVal">50</span>% of original</span>
@@ -3160,6 +3163,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             try { updateSubPreview(); } catch (e) {}
             uPushTone();
             uPushFont();
+            uPushLength();
             try { mrsUpdateChoices(); } catch (e) {}
         }
         function uPushFont() {
@@ -3178,6 +3182,13 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
                 if (sel.querySelector('option[value="' + prev + '"]')) sel.value = prev;
                 uPushFont();
             } catch (e) {}
+        }
+        function uPushLength() {
+            const L = parseInt(document.getElementById('uLength')?.value || '50', 10) || 50;
+            const rr = document.getElementById('recapRatio'); if (rr) { rr.value = L; const rv = document.getElementById('recapRatioVal'); if (rv) rv.innerText = L; }
+            uSetSafe('dialogueRatio', L <= 45 ? '40' : (L <= 55 ? '50' : '60'));
+            uSetSafe('pjRatio', String(L));
+            try { mrsUpdateChoices(); } catch (e) {}
         }
         function uPushTone() {
             const sp = document.getElementById('uSpeed')?.value || '1.3';
@@ -3219,7 +3230,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         }
 
         function uHideDuplicates() {
-            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur', 'dialogueMaleVoice', 'dialogueFemaleVoice', 'ssMale', 'ssFemale', 'pjMale', 'pjFemale', 'ssVoiceRow', 'pjVoiceRow', 'dialogueRate', 'dialoguePitch', 'autoToneBlock'].forEach(function (id) {
+            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur', 'dialogueMaleVoice', 'dialogueFemaleVoice', 'ssMale', 'ssFemale', 'pjMale', 'pjFemale', 'ssVoiceRow', 'pjVoiceRow', 'dialogueRate', 'dialoguePitch', 'autoToneBlock', 'autoLengthBlock', 'dialogueRatio', 'pjRatio'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 const lbl = el.closest('label');
