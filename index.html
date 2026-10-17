@@ -3040,6 +3040,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             const back = document.getElementById('wzBack'), next = document.getElementById('wzNext');
             if (back) back.style.visibility = (n <= 1 ? 'hidden' : 'visible');
             if (next) next.style.visibility = (n >= 3 ? 'hidden' : 'visible');
+            if (next && n === 1) { next.disabled = !window.MRS_SOURCE_FILE; next.classList.toggle('opacity-50', !window.MRS_SOURCE_FILE); }
             const mn = document.getElementById('wzModeName'); if (mn) mn.textContent = MRS_MODE_LABEL[window.MRS_MODE] || 'Auto Recap';
             document.querySelectorAll('#mrsStepStrip .workspace-step').forEach(function (el) {
                 const s = parseInt(el.dataset.step || '0', 10);
@@ -3059,6 +3060,8 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             const chip = document.getElementById('wzSourceChip');
             if (chip) { chip.textContent = (f.size / 1048576).toFixed(1) + ' MB'; chip.className = 'text-[10px] font-bold px-2 py-1 rounded bg-emerald-600 text-white'; }
             mrsInjectSource();
+            try { mrsUpdateChoices(); } catch (e) {}
+            if (typeof MRS_WZ_STEP !== 'undefined' && MRS_WZ_STEP === 1) mrsWzGo(2);
         }
         function mrsModeVideoInputs() {
             const m = window.MRS_MODE || 'auto';
@@ -3215,6 +3218,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             const box = document.getElementById('mrsChoices'); if (!box) return;
             const ratioEl = document.querySelector('input[name=ratio]:checked');
             const items = [
+                ['Source',  window.MRS_SOURCE_FILE ? window.MRS_SOURCE_FILE.name.slice(0, 28) : '—'],
                 ['Preset',  mrsSelText('recapPreset').split('—')[0].trim()],
                 ['Style',   mrsSelText('recapStyle').split('—')[0].replace(/^★\s*/, '').trim()],
                 ['Length',  (document.getElementById('recapRatioVal')?.innerText || '50') + '%'],
