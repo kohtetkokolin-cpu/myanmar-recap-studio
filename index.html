@@ -298,6 +298,21 @@ select option { background: #0e1730; color: #eef2ff; }
                     <div class="text-sm font-bold text-slate-800"><i class="fa-solid fa-sliders text-indigo-400 mr-2"></i>Configure &amp; Run — <span id="wzModeName">Auto Recap</span></div>
                     <span class="text-[10px] text-slate-400">အောက်မှာ setting ချိန်ပြီး START နှိပ်ပါ။ Movie Index ကို ပြန်သုံးပါမယ်။</span>
                 </div>
+                <div class="card p-4 mb-4 border-l-4 border-fuchsia-500">
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                        <div class="text-[11px] font-bold tracking-widest text-fuchsia-300 uppercase"><i class="fa-solid fa-sliders mr-1"></i>Common Output Settings</div>
+                        <span class="text-[10px] text-slate-400">ဒီမှာ ချိန်လိုက်တာတွေ ရွေးထားတဲ့ mode ဆီ အလိုအလျောက် ရောက်ပါမယ်</span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="text-[11px] font-bold text-slate-500">Aspect<select id="uAspect" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option value="16:9">16:9 (YouTube)</option><option value="9:16">9:16 (TikTok)</option><option value="1:1">1:1 (Square)</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500">Resolution<select id="uRes" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option value="1280:720">1280×720</option><option value="1920:1080">1920×1080</option><option value="854:480">854×480</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500">Subtitle language<select id="uLang" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option value="">အသံဘာသာအတိုင်း</option><option value="Burmese">မြန်မာ</option><option value="English">English</option><option value="Thai">ไทย</option><option value="Chinese Simplified">中文</option><option value="Japanese">日本語</option><option value="Korean">한국어</option><option value="Hindi">हिन्दी</option><option value="Spanish">Español</option><option value="Indonesian">Indonesia</option><option value="Vietnamese">Tiếng Việt</option><option value="Arabic">العربية</option><option value="French">Français</option><option value="Russian">Русский</option></select></label>
+                        <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold mt-4">Subtitles<input type="checkbox" id="uSubs" class="toggle-checkbox" checked onchange="uPush()"></label>
+                        <label class="text-[11px] font-bold text-slate-500">Sub size<input type="number" id="uSubSize" value="24" min="10" max="80" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
+                        <label class="text-[11px] font-bold text-slate-500">Sub color<select id="uSubColor" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option>Yellow</option><option>White</option><option>Green</option><option>Cyan</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500">Sub position %<input type="number" id="uSubPos" value="20" min="0" max="95" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
+                    </div>
+                </div>
             </div>
         </div>
     
@@ -3033,7 +3048,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
                 const s = document.getElementById(id); if (!s) return;
                 s.classList.toggle('hidden', !(showSections && id === active));
             });
-            if (n === 3) { try { mrsInjectSource(); } catch (e) {} }
+            if (n === 3) { try { mrsInjectSource(); } catch (e) {} try { uPush(); } catch (e) {} }
             const title = document.getElementById('wzTitle');
             const titles = { 1: 'Step 1 · Source & Analyze Once', 2: 'Step 2 · Output Format', 3: 'Step 3 · Configure & Run' };
             if (title) title.textContent = titles[n] || '';
@@ -3083,6 +3098,42 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
                     el.dispatchEvent(new Event('change', { bubbles: true }));
                 } catch (e) {}
             });
+        }
+
+        function uSetSafe(id, val) {
+            const el = document.getElementById(id); if (!el) return;
+            if (el.tagName === 'SELECT') { const opt = Array.prototype.find.call(el.options, o => o.value === String(val)); if (opt) el.value = String(val); }
+            else el.value = val;
+        }
+        function uSetCheck(id, val) {
+            const el = document.getElementById(id); if (!el) return;
+            el.checked = !!val;
+        }
+        function uInit() {
+            const r = document.querySelector('input[name=ratio]:checked');
+            const a = document.getElementById('uAspect'); if (a && r) a.value = r.value;
+            const res = document.getElementById('outputResolution'); const u = document.getElementById('uRes'); if (u && res) u.value = res.value;
+        }
+        function uPush() {
+            const asp = document.getElementById('uAspect')?.value || '16:9';
+            const res = document.getElementById('uRes')?.value || '1280:720';
+            const subs = document.getElementById('uSubs')?.checked !== false;
+            const col = document.getElementById('uSubColor')?.value || 'Yellow';
+            const sz = document.getElementById('uSubSize')?.value || '24';
+            const pos = document.getElementById('uSubPos')?.value || '20';
+            const lang = document.getElementById('uLang')?.value || '';
+            const radio = document.querySelector('input[name=ratio][value="' + asp + '"]'); if (radio) radio.checked = true;
+            uSetSafe('dialogueAspectRatio', asp); uSetSafe('pjAspect', asp); uSetSafe('ssAspect', asp);
+            uSetSafe('outputResolution', res); uSetSafe('dialogueResolution', res); uSetSafe('pjRes', res); uSetSafe('ssRes', res); uSetSafe('manualResolution', res);
+            uSetCheck('subToggle', subs); uSetCheck('dialogueSubs', subs); uSetCheck('manualSubs', subs);
+            uSetSafe('ssSubMode', subs ? 'srt' : 'none');
+            uSetSafe('subColor', col); uSetSafe('dialogueSubColor', col); uSetSafe('ssSubColor', col);
+            uSetSafe('subSize', sz); uSetSafe('dialogueSubSize', sz); uSetSafe('ssSubSize', sz);
+            uSetSafe('subPosition', pos); uSetSafe('dialogueSubPosition', pos);
+            uSetSafe('subLanguage', lang);
+            try { updateOutputResolutionForRatio(); } catch (e) {}
+            try { updateSubPreview(); } catch (e) {}
+            try { mrsUpdateChoices(); } catch (e) {}
         }
 
         async function mrsLoadSystem() {
@@ -3242,6 +3293,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         applySimpleRecapUI();
         updateOutputResolutionForRatio();
         applyRecapPreset(document.getElementById('recapPreset')?.value || 'series');
+        try { uInit(); } catch (e) {}
         mrsWzGo(1);
         mrsLoadSystem();
     </script>
