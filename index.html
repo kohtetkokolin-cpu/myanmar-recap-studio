@@ -27,8 +27,9 @@
         /* Focused recap product: hide optional studios and fragile experimental controls. */
         #legacyTopNav, #tabBtnFinder, #tabBtnStudio, #tabBtnVoice, #tabBtnWriter, #movieFinder, #voiceStudio, #storyWriter { display: none !important; }
         .grid.grid-cols-4 { grid-template-columns: 1fr !important; }
-        #legacyAnalysisCard, #legacySyncCard { display: none !important; }
         #thumbnailSection { display: none !important; }
+        /* Analysis Engine + Evidence Sync are now first-class cards in the
+           unified workflow (no longer hidden). */
         .simple-hidden { display: none !important; }
         /* Option 1 premium workspace: keep the existing IDs and handlers, but
            group them visually like a real creator application. */
@@ -412,7 +413,7 @@
         </div>
     </section>
     <section id="dialogueRecapTool" class="max-w-7xl mx-auto hidden">
-        <div class="mb-3 flex items-center gap-2"><span class="bg-amber-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">RECAP DIALOGUE</span><span class="text-[11px] text-slate-500">Recap · Recap + Dialogue · Dialogue only — အသံနဲ့ ရုပ်ပုံ frame-exact sync</span></div>
+        <div class="mb-4 flex items-center gap-3 flex-wrap"><span class="bg-amber-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">STEP 3 · SHAPE — DIALOGUE</span><span class="text-[11px] text-slate-500">Recap · Recap + Dialogue · Dialogue only — အသံနဲ့ ရုပ်ပုံ frame-exact sync</span></div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div class="lg:col-span-2 space-y-4">
         <div class="card p-4 border-2 border-amber-200">
@@ -471,9 +472,13 @@
         </div>
     </section>
     <section id="autoRecapTool" class="max-w-7xl mx-auto">
-        <div class="mb-3 flex items-center gap-2"><span class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">RECAP AUTO</span><span class="text-[11px] text-slate-500">Auto analysis, narration and render workflow</span></div>
+        <div class="mb-4 flex items-center gap-3 flex-wrap">
+            <span class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">STEP 3 · SHAPE — AUTO</span>
+            <span class="text-[11px] text-slate-500">Movie Index ကို ပြန်သုံးပြီး narration + render။ Default engine: Ranked Local v2 (Balanced)။</span>
+        </div>
         <div class="flex flex-col lg:flex-row gap-8">
         <div class="lg:w-2/3 space-y-6">
+            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">① Source &amp; Workflow</div>
             <div class="card p-6 flex flex-col items-center">
                 <div class="w-full aspect-video bg-black rounded-lg overflow-hidden relative mb-4 flex items-center justify-center">
                     <video id="videoPreview" class="w-full h-full object-contain" controls></video>
@@ -510,6 +515,7 @@
                 <div id="presetHelp" class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[11px] text-blue-900"></div>
             </div>
 
+            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">② Visual Effects &amp; Transform</div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="card p-5">
                     <div class="flex justify-between items-center">
@@ -581,6 +587,7 @@
                 </div>
             </div>
 
+            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">③ Analysis Engine &amp; Sync</div>
             <div id="legacyAnalysisCard" class="card p-5 space-y-3 border-l-4 border-teal-500">
                 <div class="flex justify-between items-center">
                     <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-gauge-high text-teal-500 mr-2"></i>Analysis Engine</h4>
@@ -646,6 +653,7 @@
                 <div id="syncAdvice" class="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-lg p-3 text-[11px]">Strict mode: source scene ကို ထပ်မပြဘဲ narration beat ကို တည်ငြိမ်စွာပြသပါမည်။</div>
             </div>
 
+            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">④ Extra Outputs (Shorts / Trailer)</div>
             <div class="card p-5 space-y-3 border-l-4 border-pink-500">
                 <div class="flex justify-between items-center">
                     <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-clapperboard text-pink-500 mr-2"></i>Reels / Shorts Auto-Generator</h4>
@@ -676,6 +684,7 @@
                 </div>
             </div>
 
+            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">⑤ Story Shape &amp; Continuity</div>
             <div class="card p-5 space-y-3 border-l-4 border-indigo-500">
                 <div class="flex justify-between items-center">
                     <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-link text-indigo-500 mr-2"></i>Continue From Previous Part</h4>
@@ -922,7 +931,7 @@
     </section>
 
     <section id="manualRecapTool" class="max-w-7xl mx-auto hidden">
-        <div class="mb-3 flex items-center gap-2"><span class="bg-violet-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">RECAP MANUAL</span><span class="text-[11px] text-slate-500">No Gemini — review every mapping before final render</span></div>
+        <div class="mb-4 flex items-center gap-3 flex-wrap"><span class="bg-violet-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">STEP 3 · SHAPE — MANUAL</span><span class="text-[11px] text-slate-500">No Gemini — review every mapping before final render</span></div>
         <div id="manualTool" class="card p-5 mt-4 border-2 border-violet-300 bg-violet-50/40">
                     <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-violet-700"><i class="fa-solid fa-sliders mr-1"></i>MANUAL TOOL — SCENE REVIEW + SYNC RENDER</h3><span class="text-[10px] bg-violet-100 text-violet-700 px-2 py-1 rounded font-bold">NO GEMINI</span></div>
                     <p class="text-[11px] text-slate-600 mb-3">Video နဲ့ narration audio နှစ်ဖိုင်ထည့်ပါ။ App က narration timing ကို local Whisper နဲ့ဖတ်ပြီး 5 စက္ကန့် source grid ပေါ်မှာ scene တွေကို confidence နဲ့တွဲပေးမယ်။ မထုတ်ခင်အထိ ကြည့်၊ ပြင်၊ approve လုပ်နိုင်ပါတယ်။</p>
