@@ -308,6 +308,7 @@ select option { background: #0e1730; color: #eef2ff; }
                         <label class="text-[11px] font-bold text-slate-500">Female character<select id="uFemaleVoice" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushVoice()"><option value="">—</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Narration speed<select id="uSpeed" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushTone()"><option value="1.2">1.2×</option><option value="1.3" selected>1.3×</option><option value="1.4">1.4×</option><option value="1.5">1.5×</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Voice pitch<select id="uPitch" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushTone()"><option value="-1">-1 · Lower</option><option value="0" selected>0 · Natural</option><option value="1">+1 · Higher</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500">Subtitle font<select id="uFont" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushFont()"><option value="">Default Font (Unicode)</option></select></label>
                         <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold mt-4">Subtitles<input type="checkbox" id="uSubs" class="toggle-checkbox" checked onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub size<input type="number" id="uSubSize" value="24" min="10" max="80" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub color<select id="uSubColor" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option>Yellow</option><option>White</option><option>Green</option><option>Cyan</option></select></label>
@@ -3158,7 +3159,25 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             try { updateOutputResolutionForRatio(); } catch (e) {}
             try { updateSubPreview(); } catch (e) {}
             uPushTone();
+            uPushFont();
             try { mrsUpdateChoices(); } catch (e) {}
+        }
+        function uPushFont() {
+            const v = document.getElementById('uFont')?.value;
+            if (v === undefined) return;
+            uSetSafe('savedFonts', v);
+            uSetSafe('dialogueFont', v);
+            try { updateSubPreview(); } catch (e) {}
+        }
+        async function uLoadFonts() {
+            try {
+                const data = await (await fetch('/api/fonts')).json();
+                const sel = document.getElementById('uFont'); if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = '<option value="">Default Font (Unicode)</option>' + (data.fonts || []).map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+                if (sel.querySelector('option[value="' + prev + '"]')) sel.value = prev;
+                uPushFont();
+            } catch (e) {}
         }
         function uPushTone() {
             const sp = document.getElementById('uSpeed')?.value || '1.3';
@@ -3237,6 +3256,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
                 }
             } catch (e) {}
             uLoadVoices();
+            uLoadFonts();
             mrsLoadIndexList();
         }
 
