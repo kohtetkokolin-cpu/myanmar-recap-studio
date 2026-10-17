@@ -529,459 +529,423 @@ select option { background: #0e1730; color: #eef2ff; }
     <section id="autoRecapTool" class="max-w-7xl mx-auto">
         <div class="mb-4 flex items-center gap-3 flex-wrap">
             <span class="bg-blue-600 text-white px-3 py-1 rounded-lg text-[11px] font-bold">STEP 3 · SHAPE — AUTO</span>
-            <span class="text-[11px] text-slate-500">Movie Index ကို ပြန်သုံးပြီး narration + render။ Default engine: Ranked Local v2 (Balanced)။</span>
+            <span class="text-[11px] text-slate-500">Movie Index ကို ပြန်သုံး → narration → sync → render။ Engine: Ranked Local v2 (Balanced)။</span>
         </div>
-        <div class="flex flex-col lg:flex-row gap-8">
-        <div class="lg:w-2/3 space-y-6">
-            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">① Source &amp; Workflow</div>
-            <div class="card p-6 flex flex-col items-center">
-                <div class="w-full aspect-video bg-black rounded-lg overflow-hidden relative mb-4 flex items-center justify-center">
-                    <video id="videoPreview" class="w-full h-full object-contain" controls></video>
-                    
-                    <div id="blurOverlayWrap" class="absolute inset-0 hidden pointer-events-none"></div>
 
-                    <div id="subPreviewOverlay" class="absolute w-full text-center pointer-events-none transition-all duration-300 sub-outline font-bold leading-tight" style="bottom: 20%; font-size: 24px; color: yellow;">
-                        စာတန်းထိုး နမူနာ<br>(Subtitle Preview)
-                    </div>
-                </div>
-
-                <div class="flex gap-4 w-full">
-                    <button onclick="document.getElementById('videoFile').click()" class="flex-1 bg-white border-2 border-dashed border-slate-300 py-3 rounded-lg text-slate-500 font-semibold hover:bg-slate-50 transition-all flex flex-col items-center">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl mb-1"></i>
-                        <span id="fileName">SELECT INPUT VIDEO (Max: 1GB)</span>
-                    </button>
-                    <input type="file" id="videoFile" class="hidden" accept="video/*" onchange="handleFileSelect(event, 'fileName', 'videoPreview')">
-                </div>
+        <!-- Live choices summary -->
+        <div class="card p-4 mb-4 border-l-4 border-indigo-500">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="text-[11px] font-bold tracking-widest text-indigo-300 uppercase"><i class="fa-solid fa-list-check mr-1"></i>ရွေးထားတာများ · Your Choices</div>
+                <span class="text-[10px] text-slate-400">ပြောင်းလိုက်တိုင်း အလိုအလျောက် update ဖြစ်ပါမယ်</span>
             </div>
+            <div id="mrsChoices" class="mt-3 flex flex-wrap gap-2 text-[11px]"></div>
+        </div>
 
-            <div class="card p-5 border-l-4 border-blue-600 space-y-3">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-route text-blue-600 mr-2"></i>Recap Workflow</h3>
-                        <p class="text-[11px] text-slate-500 mt-1">အောက်က preset က source အမျိုးအစားနဲ့ platform အလိုက် safe setting တွေကို အလိုအလျောက်ချိန်ပေးပါမယ်။</p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div class="lg:col-span-2 space-y-5">
+
+                <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">① Source</div>
+                <div class="card p-5 flex flex-col items-center">
+                    <div class="w-full aspect-video bg-black rounded-lg overflow-hidden relative mb-4 flex items-center justify-center">
+                        <video id="videoPreview" class="w-full h-full object-contain" controls></video>
+                        <div id="blurOverlayWrap" class="absolute inset-0 hidden pointer-events-none"></div>
+                        <div id="subPreviewOverlay" class="absolute w-full text-center pointer-events-none transition-all duration-300 sub-outline font-bold leading-tight" style="bottom: 20%; font-size: 24px; color: yellow;">
+                            စာတန်းထိုး နမူနာ<br>(Subtitle Preview)
+                        </div>
                     </div>
-                    <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">LOCAL-FIRST</span>
-                </div>
-                <select id="recapPreset" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm font-semibold" onchange="applyRecapPreset(this.value)">
-                    <option value="short">Short episode / TikTok — 5–15 မိနစ် source</option>
-                    <option value="series" selected>Series episode — Part တစ်ဖိုင်ချင်း၊ အဆက်အစပ်ရှိ</option>
-                    <option value="long">Long movie / YouTube — 1–3 နာရီ source</option>
-                </select>
-                <div id="presetHelp" class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[11px] text-blue-900"></div>
-            </div>
-
-            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">② Visual Effects &amp; Transform</div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="card p-5">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="fa-solid fa-droplet"></i></div>
-                            <div><h4 class="font-bold text-sm">BLUR EFFECT</h4></div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="blurMasterToggle" class="toggle-checkbox">
-                            <button onclick="openModal('blurModal')" class="bg-slate-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold">SETUP</button>
-                        </div>
+                    <div class="flex gap-4 w-full">
+                        <button onclick="document.getElementById('videoFile').click()" class="flex-1 bg-white border-2 border-dashed border-slate-300 py-3 rounded-lg text-slate-500 font-semibold hover:bg-slate-50 transition-all flex flex-col items-center">
+                            <i class="fa-solid fa-cloud-arrow-up text-2xl mb-1"></i>
+                            <span id="fileName">SELECT INPUT VIDEO (Max: 1GB)</span>
+                        </button>
+                        <input type="file" id="videoFile" class="hidden" accept="video/*" onchange="handleFileSelect(event, 'fileName', 'videoPreview')">
                     </div>
                 </div>
 
-                <div class="card p-5 border-l-4 border-purple-500">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="fa-solid fa-snowflake"></i></div>
-                            <div>
-                                <h4 class="font-bold text-sm uppercase">Freeze Frame</h4>
-                                <p class="text-[10px] text-slate-400">ရုပ်သံကို ရပ်တန့်၍ Zoom ဆွဲသည့်စနစ်</p>
-                            </div>
+                <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">② Story Shape</div>
+                <div class="card p-5 space-y-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-route text-blue-600 mr-2"></i>Recap Workflow Preset</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">Source အမျိုးအစားနဲ့ platform အလိုက် safe setting တွေကို အလိုအလျောက် ချိန်ပေးပါမယ်။</p>
                         </div>
-                        <input type="checkbox" id="freezeToggle" class="toggle-checkbox" checked>
+                        <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">LOCAL-FIRST</span>
                     </div>
-                    <div class="space-y-4">
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-[11px] font-bold text-slate-600">
-                                <span>1. Interval (ဘယ်နှစ်စက္ကန့်ပြသပြီးတိုင်း ရပ်မလဲ)</span> <span id="intervalVal" class="text-purple-600">5s</span>
-                            </div>
-                            <input type="range" id="freezeInterval" min="2" max="20" value="5" class="slider" oninput="document.getElementById('intervalVal').innerText=this.value+'s'">
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-[11px] font-bold text-slate-600">
-                                <span>2. Duration (ဘယ်နှစ်စက္ကန့်ကြာ ရပ်ထားမလဲ)</span> <span id="durationVal" class="text-purple-600">3s</span>
-                            </div>
-                            <input type="range" id="freezeDuration" min="1" max="10" value="3" class="slider" oninput="document.getElementById('durationVal').innerText=this.value+'s'">
-                        </div>
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-[11px] font-bold text-slate-600">
-                                <span>3. Natural Zoom Power (အနီးဆွဲအား)</span> <span id="zoomVal" class="text-purple-600">1.5x</span>
-                            </div>
-                            <input type="range" id="zoomPower" min="1.0" max="3.0" step="0.1" value="1.5" class="slider" oninput="document.getElementById('zoomVal').innerText=this.value+'x'">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card p-5 space-y-4 border-l-4 border-yellow-400">
-                <h4 class="text-sm font-bold text-slate-700 uppercase flex items-center"><i class="fa-solid fa-shield-halved text-yellow-500 mr-2"></i> Transformation Tools</h4>
-                <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded p-2">Mirror, color, rotation နဲ့ grain တို့က editing/transformation aids ပဲ ဖြစ်ပြီး copyright လွတ်မြောက်မှုကို အာမမခံပါ။ အသုံးပြုခွင့်နဲ့ platform rules ကို ကိုယ်တိုင်စစ်ဆေးပါ။</p>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
-                        <span class="text-xs font-bold text-slate-600">Mirror / Flip <i class="fa-solid fa-arrows-left-right ml-1"></i></span>
-                        <input type="checkbox" id="bypassMirror" class="toggle-checkbox">
-                    </div>
-                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
-                        <span class="text-xs font-bold text-slate-600">Color Grade <i class="fa-solid fa-palette ml-1"></i></span>
-                        <input type="checkbox" id="bypassColor" class="toggle-checkbox">
-                    </div>
-                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
-                        <span class="text-xs font-bold text-slate-600">Micro Rotation <i class="fa-solid fa-rotate ml-1"></i></span>
-                        <input type="checkbox" id="bypassRotation" class="toggle-checkbox">
-                    </div>
-                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
-                        <span class="text-xs font-bold text-slate-600">Film Grain / Noise <i class="fa-solid fa-tv ml-1"></i></span>
-                        <input type="checkbox" id="bypassNoise" class="toggle-checkbox">
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">③ Analysis Engine &amp; Sync</div>
-            <div id="legacyAnalysisCard" class="card p-5 space-y-3 border-l-4 border-teal-500">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-gauge-high text-teal-500 mr-2"></i>Analysis Engine</h4>
-                    <span id="analysisEngineBadge" class="bg-teal-100 text-teal-700 px-3 py-1 rounded text-xs font-bold">RECOMMENDED</span>
-                </div>
-                <p class="text-xs text-slate-400">Auto mode မှာ ၃၀ မိနစ်အထိ video ကို Part မခွဲပါ။ ၁ နာရီ/၂ နာရီ source တွေကို ၃၀ မိနစ်စီ Part ခွဲပြီး Part တစ်ခုချင်းစီကို ၅ မိနစ်စီ Gemini analysis လုပ်ကာ script → TTS → sync render ပြုလုပ်ပါမယ်။</p>
-                <select id="analysisEngine" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                        onchange="const badge=document.getElementById('analysisEngineBadge'); const mb=document.getElementById('minBeatSecRow'); const isGemini=this.value==='gemini_auto'||this.value==='gemini_video'; if(isGemini){badge.innerText='AI AUTO';badge.className='bg-violet-100 text-violet-700 px-3 py-1 rounded text-xs font-bold';mb.style.display='none';}else{badge.innerText='NO VIDEO AI';badge.className='bg-amber-100 text-amber-700 px-3 py-1 rounded text-xs font-bold';mb.style.display='block';}">
-                    <option value="gemini_auto">🤖 Auto — 30-minute Parts + 5-minute analysis windows</option>
-                    <option value="gemini_video">🎥 Gemini Video — legacy single-segment mode</option>
-                    <option value="ranked_local_v2" selected>⚡ Ranked Local v2 — Local evidence + bounded narration AI</option>
-                    <option value="local_fast">🧪 Legacy Fast Evidence Mode</option>
-                </select>
-                <div id="minBeatSecRow" style="display:none;">
-                    <div class="flex justify-between items-center mt-2">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase">Scene Merge Length (chunk အရေအတွက် လျှော့ချရန်)</label>
-                        <span class="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-xs font-bold"><span id="minBeatVal">35</span>s</span>
-                    </div>
-                    <p class="text-[11px] text-slate-400 mb-1">တန်ဖိုးများလေ scene/chunk အရေအတွက် နည်းလေ၊ ပိုမြန်လေ (dialogue/detail အနည်းငယ် ချုံ့နိုင်ပါတယ်)</p>
-                    <input type="range" id="minBeatSec" min="10" max="90" step="5" value="35" class="slider" oninput="document.getElementById('minBeatVal').innerText=this.value">
-                </div>
-            </div>
-
-            <div id="legacySyncCard" class="card p-5 space-y-4 border-l-4 border-emerald-500">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-link text-emerald-600 mr-2"></i>Evidence Sync & AI Budget</h4>
-                    <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-xs font-bold">SYNC-FIRST</span>
-                </div>
-                <p class="text-xs text-slate-500">Narration ပြောတဲ့အရာနဲ့ မြင်ကွင်းတကယ်ကိုက်အောင် AI ကို story/စာသားအတွက်သာသုံးပြီး timestamp/clip timing ကို local engine က ထိန်းပါမည်။</p>
-                <div>
-                    <label class="text-[11px] font-bold text-slate-500 block mb-1">Sync Mode</label>
-                    <select id="syncMode" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                        <option value="strict" selected>Strict Evidence Sync — loop မလုပ်၊ လိုအပ်လျှင် freeze-frame</option>
-                        <option value="balanced">Balanced — အနည်းငယ် stretch/freeze ခွင့်ပြု</option>
-                        <option value="legacy">Legacy — အရင် workflow (loop ခွင့်ပြု)</option>
+                    <select id="recapPreset" class="w-full border border-blue-200 rounded-lg px-3 py-2 text-sm font-semibold" onchange="applyRecapPreset(this.value)">
+                        <option value="short">Short episode / TikTok — 5–15 မိနစ် source</option>
+                        <option value="series" selected>Series episode — Part တစ်ဖိုင်ချင်း၊ အဆက်အစပ်ရှိ</option>
+                        <option value="long">Long movie / YouTube — 1–3 နာရီ source</option>
                     </select>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div id="presetHelp" class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-[11px] text-blue-900"></div>
+
                     <div>
-                        <label class="text-[11px] font-bold text-slate-500 block mb-1">Shortfall Fallback</label>
-                        <select id="fallbackPolicy" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                            <option value="freeze" selected>Freeze frame (အကြောင်းအရာမပြောင်း)</option>
-                            <option value="loop">Loop source shot (legacy)</option>
+                        <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-pen-nib text-blue-500 mr-2"></i>Recap Script Style</h4>
+                        <p class="text-xs text-slate-400 mb-2">Script ကို ဘယ်လို လေသံနဲ့ ရေးမလဲ ရွေးပါ — video ထုတ်တိုင်း ဒီ style အတိုင်း AI က ရေးပေးပါမယ်။</p>
+                        <select id="recapStyle" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="cinematic" selected>★ သဘာဝကျသော ရုပ်ရှင်ဇာတ်လမ်းပြန်ပြောပုံ — Natural Cinematic</option>
+                            <option value="hook">★ ထိပ်တန်း ဆွဲငင်မှု ပုံစံ — Cliffhanger Hook (Short-Drama)</option>
+                            <option value="documentary">တရားဝင် မှတ်တမ်းဇာတ်ကား ပုံစံ — Formal Documentary</option>
+                            <option value="hybrid">★ ရောနှောပုံစံ (တရားဝင်+ဆွဲငင်မှု) — Hybrid</option>
+                            <option value="cdrama">★ တရုတ် Short-Drama Viral ပုံစံ</option>
+                            <option value="investigator">★ စုံထောက် အကဲဖြတ် ပုံစံ — Investigator</option>
+                            <option value="immersive">★ ဇာတ်ကားထဲ ဝင်ရောက်ခံစားရမယ့် ပုံစံ — Immersive</option>
+                            <option value="emotional">★ ဇာတ်ကောင် စိတ်ခံစားမှု ဗဟိုပြု ပုံစံ — Emotional</option>
+                            <option value="banter">ဇာတ်ကောင် အပြန်အလှန် စကားပြော ပုံစံ — Character Voices</option>
+                            <option value="reactor">တုံ့ပြန်ချက်ပါ ပြောပြတဲ့ ပုံစံ — Reactor Commentary</option>
+                            <option value="pov">မင်းပဲ ဖြစ်နေရင် ပုံစံ — Second-Person POV</option>
+                            <option value="comedic">ဟာသ / ချောင်းချောင်းထိုးပုံစံ — Comedic</option>
+                            <option value="shorts_rapidfire">အမြန်ဆုံး ချုံ့ငယ်ပုံစံ — Rapid-Fire (Shorts/Reels)</option>
+                            <option value="thriller_suspense">★ သည်းထိတ်ရင်ဖို အဆင့်ဆင့်တက်ပုံ — Thriller Suspense</option>
+                            <option value="romance">အချစ်ဇာတ်လမ်း ဆက်ဆံရေးဗဟိုပြု — Romance</option>
+                            <option value="action">★ အက်ရှင် အရှိန်မြန် ပြကွက်ဗဟိုပြု — Action Momentum</option>
+                            <option value="noir">နွိုက်စတိုင် လျှို့ဝှက်မှုနဲ့ မီးခိုးရောင်ကျင့်ဝတ် — Noir</option>
+                            <option value="survival">ရှင်သန်ရေး ဖိအားအဆင့်ဆင့်တက်ပုံ — Survival</option>
+                            <option value="psychological">စိတ်ပိုင်းဆိုင်ရာ ကျဆင်းမှု — Psychological</option>
+                            <option value="plot_explainer">★ ဇာတ်လမ်းကို ရှင်းလင်းလွယ်ကူစွာပြောပုံ — Plot Explainer</option>
+                            <option value="visual_hook">★ TikTok Visual Hook Cinematic — Short-form</option>
+                            <option value="dialogue_cinematic">★ စကားပြောခန်းအသားပေး ရုပ်ရှင်ဆန်သောပုံစံ — Dialogue-Centered Cinematic</option>
+                            <option value="dialogue_banter">★ ဇာတ်ကောင်အပြန်အလှန် စကားပြောအသားပေး — Character Banter</option>
                         </select>
                     </div>
+
                     <div>
-                        <label class="text-[11px] font-bold text-slate-500 block mb-1">AI Usage Budget</label>
-                        <select id="aiBudget" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                            <option value="local" selected>Local-first (quota အနည်းဆုံး)</option>
-                            <option value="balanced">Balanced (အကြံပြု)</option>
-                            <option value="quality">Quality (Gemini Video)</option>
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-scissors text-blue-500 mr-2"></i>Recap Length</h4>
+                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold"><span id="recapRatioVal">50</span>% of original</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1 mb-1">ဥပမာ 10 မိနစ် ဇာတ်လမ်းကို 40% ဆိုရင် ~4 မိနစ် recap ဖြစ်အောင် အဓိကအချက်တွေကိုပဲ ရွေးရေးပါမယ်။</p>
+                        <input type="range" id="recapRatio" min="15" max="90" value="50" class="slider" oninput="document.getElementById('recapRatioVal').innerText=this.value">
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-link text-indigo-500 mr-2"></i>Continue From Previous Part</h4>
+                        <p class="text-xs text-slate-400 mt-1 mb-1">Part 1/2 ခွဲပြီး သီးခြားစီ upload လုပ်ရင် Part 1 ကို ရွေးထားပါ — ဇာတ်ကြောင်း ဆက်စပ်နေမယ်။</p>
+                        <select id="continueFromId" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="">(မရွေးထားပါ — အသစ်စတင်မည်)</option>
                         </select>
                     </div>
+
+                    <label class="flex items-center justify-between gap-3 bg-slate-50 border rounded-lg p-3 cursor-pointer">
+                        <span><b class="text-xs text-slate-700">Auto Part Output</b><br><span class="text-[10px] text-slate-400">Part တစ်ခုစီမှာ TTS + script + SRT + final MP4 ထုတ်မယ်။</span></span>
+                        <input type="checkbox" id="cleanOutput" class="toggle-checkbox">
+                    </label>
                 </div>
-                <div>
-                    <div class="flex justify-between items-center">
-                        <label class="text-[11px] font-bold text-slate-500">Max natural audio speed-up</label>
-                        <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold"><span id="maxStretchVal">1.00</span>x</span>
+
+                <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">③ Visual &amp; Fair-use Transform</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card p-5">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="fa-solid fa-droplet"></i></div>
+                                <div><h4 class="font-bold text-sm">BLUR EFFECT</h4></div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="blurMasterToggle" class="toggle-checkbox">
+                                <button onclick="openModal('blurModal')" class="bg-slate-100 text-blue-600 px-3 py-1 rounded-md text-xs font-bold">SETUP</button>
+                            </div>
+                        </div>
                     </div>
-                    <input type="range" id="maxAudioStretch" min="1.00" max="1.20" step="0.01" value="1.00" class="slider" oninput="document.getElementById('maxStretchVal').innerText=Number(this.value).toFixed(2)">
-                    <p class="text-[10px] text-slate-400 mt-1">1.12x ကျော်ရင် အသံမမြန်အောင် script/visual fallback သုံးပါမည်။</p>
-                </div>
-                <div id="syncAdvice" class="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-lg p-3 text-[11px]">Strict mode: source scene ကို ထပ်မပြဘဲ narration beat ကို တည်ငြိမ်စွာပြသပါမည်။</div>
-            </div>
 
-            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">④ Extra Outputs (Shorts / Trailer)</div>
-            <div class="card p-5 space-y-3 border-l-4 border-pink-500">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-clapperboard text-pink-500 mr-2"></i>Reels / Shorts Auto-Generator</h4>
-                    <input type="checkbox" id="makeShortsToggle" class="toggle-checkbox" onchange="document.getElementById('numShortsRow').style.display=this.checked?'block':'none';">
-                </div>
-                <p class="text-xs text-slate-400">Recap ပြီးတာနဲ့ Facebook Reel / YouTube Shorts အတွက် စိတ်ဝင်စားစရာအခန်းလေးတွေကို 9:16 vertical clip အနေနဲ့ အလိုအလျောက် ထပ်ဖန်တီးပေးပါမည် (hook caption + burned subtitle ပါ)။</p>
-                <div id="numShortsRow" style="display:none;">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase">Shorts အရေအတွက်</label>
-                        <span class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded text-xs font-bold"><span id="numShortsVal">3</span></span>
+                    <div class="card p-5 border-l-4 border-purple-500">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="fa-solid fa-snowflake"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm uppercase">Freeze Frame</h4>
+                                    <p class="text-[10px] text-slate-400">ရုပ်သံကို ရပ်တန့်၍ Zoom ဆွဲသည့်စနစ်</p>
+                                </div>
+                            </div>
+                            <input type="checkbox" id="freezeToggle" class="toggle-checkbox" checked>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-bold text-slate-600">
+                                    <span>1. Interval (ဘယ်နှစ်စက္ကန့်ပြသပြီးတိုင်း ရပ်မလဲ)</span> <span id="intervalVal" class="text-purple-600">5s</span>
+                                </div>
+                                <input type="range" id="freezeInterval" min="2" max="20" value="5" class="slider" oninput="document.getElementById('intervalVal').innerText=this.value+'s'">
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-bold text-slate-600">
+                                    <span>2. Duration (ဘယ်နှစ်စက္ကန့်ကြာ ရပ်ထားမလဲ)</span> <span id="durationVal" class="text-purple-600">3s</span>
+                                </div>
+                                <input type="range" id="freezeDuration" min="1" max="10" value="3" class="slider" oninput="document.getElementById('durationVal').innerText=this.value+'s'">
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[11px] font-bold text-slate-600">
+                                    <span>3. Natural Zoom Power (အနီးဆွဲအား)</span> <span id="zoomVal" class="text-purple-600">1.5x</span>
+                                </div>
+                                <input type="range" id="zoomPower" min="1.0" max="3.0" step="0.1" value="1.5" class="slider" oninput="document.getElementById('zoomVal').innerText=this.value+'x'">
+                            </div>
+                        </div>
                     </div>
-                    <input type="range" id="numShorts" min="1" max="8" step="1" value="3" class="slider" oninput="document.getElementById('numShortsVal').innerText=this.value">
                 </div>
-            </div>
 
-            <div class="card p-5 space-y-3 border-l-4 border-amber-500">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-film text-amber-500 mr-2"></i>Cinematic Trailer Intro</h4>
-                    <input type="checkbox" id="makeTeaserToggle" class="toggle-checkbox" onchange="document.getElementById('numFlashesRow').style.display=this.checked?'block':'none';">
-                </div>
-                <p class="text-xs text-slate-400">ရုပ်ရှင်ကားတွေက ဇာတ်လမ်းမပြခင် trailer အနှစ်ချုပ် အရင်ပြသလို — Recap ရဲ့ ဇာတ်ဝင်ခန်း စစချင်းမပြခင် hook-worthy flash-cut အနည်းငယ်ကို ဇာတ်ကားတစ်ခုလုံးထဲက ရွေးထုတ်ပြီး cold-open teaser အနေနဲ့ အစမှာ ထည့်ပေးပါမည်။</p>
-                <div id="numFlashesRow" style="display:none;">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase">Flash Cut အရေအတွက်</label>
-                        <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-bold"><span id="numFlashesVal">6</span></span>
+                <div class="card p-5 space-y-4 border-l-4 border-yellow-400">
+                    <h4 class="text-sm font-bold text-slate-700 uppercase flex items-center"><i class="fa-solid fa-shield-halved text-yellow-500 mr-2"></i>Fair-use Transform (Auto)</h4>
+                    <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded p-2">အပေါ်က Step 3 preset က ဒီ toggle တွေကို ချိန်ပေးပါမယ်။ ဤအရာများသည် transformation aids သာဖြစ်ပြီး copyright အာမခံ မဟုတ်ပါ။</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
+                            <span class="text-xs font-bold text-slate-600">Mirror / Flip <i class="fa-solid fa-arrows-left-right ml-1"></i></span>
+                            <input type="checkbox" id="bypassMirror" class="toggle-checkbox">
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
+                            <span class="text-xs font-bold text-slate-600">Color Grade <i class="fa-solid fa-palette ml-1"></i></span>
+                            <input type="checkbox" id="bypassColor" class="toggle-checkbox">
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
+                            <span class="text-xs font-bold text-slate-600">Micro Rotation <i class="fa-solid fa-rotate ml-1"></i></span>
+                            <input type="checkbox" id="bypassRotation" class="toggle-checkbox">
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded">
+                            <span class="text-xs font-bold text-slate-600">Film Grain / Noise <i class="fa-solid fa-tv ml-1"></i></span>
+                            <input type="checkbox" id="bypassNoise" class="toggle-checkbox">
+                        </div>
                     </div>
-                    <input type="range" id="numFlashes" min="3" max="10" step="1" value="6" class="slider" oninput="document.getElementById('numFlashesVal').innerText=this.value">
                 </div>
-            </div>
 
-            <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase mt-1">⑤ Story Shape &amp; Continuity</div>
-            <div class="card p-5 space-y-3 border-l-4 border-indigo-500">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-link text-indigo-500 mr-2"></i>Continue From Previous Part</h4>
+                <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">④ Analysis &amp; Sync</div>
+                <div class="card p-5 space-y-3 border-l-4 border-teal-500">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-gauge-high text-teal-500 mr-2"></i>Analysis Engine</h4>
+                        <span id="analysisEngineBadge" class="bg-teal-100 text-teal-700 px-3 py-1 rounded text-xs font-bold">RECOMMENDED</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Local evidence (shots + transcript) ကို အခြေခံပြီး narration ကို bounded AI နဲ့ ရေးပါမယ်။</p>
+                    <select id="analysisEngine" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                            onchange="const badge=document.getElementById('analysisEngineBadge'); const mb=document.getElementById('minBeatSecRow'); if(this.value==='local_fast'){badge.innerText='LOCAL ONLY';badge.className='bg-amber-100 text-amber-700 px-3 py-1 rounded text-xs font-bold';if(mb)mb.style.display='block';}else{badge.innerText='RECOMMENDED';badge.className='bg-teal-100 text-teal-700 px-3 py-1 rounded text-xs font-bold';if(mb)mb.style.display='block';}">
+                        <option value="ranked_local_v2" selected>⚡ Ranked Local v2 — Local evidence + bounded narration AI (Balanced)</option>
+                        <option value="local_fast">🧪 Fast — Local evidence only (အမြန်ဆုံး)</option>
+                    </select>
+                    <div id="minBeatSecRow">
+                        <div class="flex justify-between items-center mt-2">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase">Scene Merge Length</label>
+                            <span class="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-xs font-bold"><span id="minBeatVal">35</span>s</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mb-1">တန်ဖိုးများလေ scene/chunk နည်းလေ ပိုမြန်လေ (detail အနည်းငယ် ချုံ့နိုင်သည်)</p>
+                        <input type="range" id="minBeatSec" min="10" max="90" step="5" value="35" class="slider" oninput="document.getElementById('minBeatVal').innerText=this.value">
+                    </div>
                 </div>
-                <p class="text-xs text-slate-400">ဇာတ်ကားကို Part 1 / Part 2 ခွဲပြီး သီးခြားစီ upload လုပ်ဖန်ဖန်ဆိုရင် — ဒီနေရာမှာ Part 1 ကို ရွေးလိုက်ရင် Part 2 ဇာတ်ကြောင်းက Part 1 ကနေ ဆက်စပ်နေမှာပါ (ဇာတ်လမ်း ရုတ်တရက် ပြောင်းသွားမှာ မဟုတ်ပါ)။</p>
-                <select id="continueFromId" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">(မရွေးထားပါ — အသစ်စတင်မည်)</option>
-                </select>
-            </div>
 
-            <div id="autoSplitCard" class="card p-5 space-y-4">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-scissors text-blue-500 mr-2"></i>Output Parting (non-Auto modes)</h4>
-                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold"><span id="splitVal">30</span> MIN/PART</span>
-                </div>
-                <p class="text-xs text-slate-400">Auto မှာ ၃၀ မိနစ်အထိ Part မခွဲပါ။ ပိုရှည်တဲ့ source ကို ၃၀ မိနစ်စီခွဲပြီး ၅ မိနစ်စီ analysis လုပ်ပါမယ်။ အောက်က merge option ကို ဖွင့်ရင် Part အားလုံးကို နောက်ဆုံး MP4 တစ်ဖိုင်အဖြစ် ပြန်ပေါင်းပါမယ်။</p>
-                <input type="range" id="splittingClips" min="5" max="50" value="30" class="slider" oninput="document.getElementById('splitVal').innerText=this.value">
-                <label class="flex items-center justify-between gap-3 bg-blue-50 border border-blue-100 rounded-lg p-3 cursor-pointer">
-                    <span><b class="text-xs text-blue-800">Auto Part Merge</b><br><span class="text-[10px] text-blue-600">Part 1, 2, 3... ကို final MP4 တစ်ဖိုင်အဖြစ် ပေါင်းမယ်</span></span>
-                    <input type="checkbox" id="autoMergeToggle" class="toggle-checkbox" checked>
-                </label>
-            </div>
-
-            <div class="card p-5 space-y-4">
-                <div class="flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-compress text-blue-500 mr-2"></i>Recap Length</h4>
-                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold"><span id="recapRatioVal">50</span>% of original</span>
-                </div>
-                <p class="text-xs text-slate-400">ဥပမာ 10 မိနစ် ဇာတ်လမ်းကို 40% ဆိုရင် ~4 မိနစ် အနှစ်ချုပ် recap ဖြစ်အောင် AI က အဓိကအချက်တွေကိုပဲ ရွေးပြီးရေးပေးမှာပါ (မလိုအပ်တဲ့ scene တွေ ကျော်သွားမည်)။</p>
-                <input type="range" id="recapRatio" min="15" max="90" value="50" class="slider" oninput="document.getElementById('recapRatioVal').innerText=this.value">
-            </div>
-
-            <div class="card p-5 space-y-3">
-                <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-pen-nib text-blue-500 mr-2"></i>Recap Script Style</h4>
-                <p class="text-xs text-slate-400">Script ကို ဘယ်လို လေသံနဲ့ ရေးမလဲ ရွေးပါ — video ထုတ်တိုင်း ရွေးထားတဲ့ style အတိုင်း AI က အကုန်လုံး ရေးပေးပါမယ်။</p>
-                <select id="recapStyle" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="cinematic" selected>★ သဘာဝကျသော ရုပ်ရှင်ဇာတ်လမ်းပြန်ပြောပုံ — Natural Cinematic</option>
-                    <option value="hook">★ ထိပ်တန်း ဆွဲငင်မှု ပုံစံ — Cliffhanger Hook (Short-Drama)</option>
-                    <option value="documentary">တရားဝင် မှတ်တမ်းဇာတ်ကား ပုံစံ — Formal Documentary</option>
-                    <option value="hybrid">★ ရောနှောပုံစံ (တရားဝင်+ဆွဲငင်မှု) — Hybrid</option>
-                    <option value="cdrama">★ တရုတ် Short-Drama Viral ပုံစံ</option>
-                    <option value="investigator">★ စုံထောက် အကဲဖြတ် ပုံစံ — Investigator</option>
-                    <option value="immersive">★ ဇာတ်ကားထဲ ဝင်ရောက်ခံစားရမယ့် ပုံစံ — Immersive</option>
-                    <option value="emotional">★ ဇာတ်ကောင် စိတ်ခံစားမှု ဗဟိုပြု ပုံစံ — Emotional</option>
-                    <option value="banter">ဇာတ်ကောင် အပြန်အလှန် စကားပြော ပုံစံ — Character Voices</option>
-                    <option value="reactor">တုံ့ပြန်ချက်ပါ ပြောပြတဲ့ ပုံစံ — Reactor Commentary</option>
-                    <option value="pov">မင်းပဲ ဖြစ်နေရင် ပုံစံ — Second-Person POV</option>
-                    <option value="comedic">ဟာသ / ချောင်းချောင်းထိုးပုံစံ — Comedic</option>
-                    <option value="shorts_rapidfire">အမြန်ဆုံး ချုံ့ငယ်ပုံစံ — Rapid-Fire (Shorts/Reels)</option>
-                    <option value="thriller_suspense">★ သည်းထိတ်ရင်ဖို အဆင့်ဆင့်တက်ပုံ — Thriller Suspense</option>
-                    <option value="romance">အချစ်ဇာတ်လမ်း ဆက်ဆံရေးဗဟိုပြု — Romance</option>
-                    <option value="action">★ အက်ရှင် အရှိန်မြန် ပြကွက်ဗဟိုပြု — Action Momentum</option>
-                    <option value="noir">နွိုက်စတိုင် လျှို့ဝှက်မှုနဲ့ မီးခိုးရောင်ကျင့်ဝတ် — Noir</option>
-                    <option value="survival">ရှင်သန်ရေး ဖိအားအဆင့်ဆင့်တက်ပုံ — Survival</option>
-                    <option value="psychological">စိတ်ပိုင်းဆိုင်ရာ ကျဆင်းမှု — Psychological</option>
-                    <option value="plot_explainer">★ ဇာတ်လမ်းကို ရှင်းလင်းလွယ်ကူစွာပြောပုံ — Plot Explainer</option>
-                    <option value="visual_hook">★ TikTok Visual Hook Cinematic — Short-form</option>
-                    <option value="dialogue_cinematic">★ စကားပြောခန်းအသားပေး ရုပ်ရှင်ဆန်သောပုံစံ — Dialogue-Centered Cinematic</option>
-                    <option value="dialogue_banter">★ ဇာတ်ကောင်အပြန်အလှန် စကားပြောအသားပေး — Character Banter</option>
-                </select>
-                <div class="flex justify-between items-center bg-slate-50 p-2 rounded mt-2">
+                <div class="card p-5 space-y-4 border-l-4 border-emerald-500">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-link text-emerald-600 mr-2"></i>Evidence Sync &amp; AI Budget</h4>
+                        <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-xs font-bold">SYNC-FIRST</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Narration နဲ့ မြင်ကွင်း တကယ်ကိုက်အောင် timing ကို local engine ထိန်းပါမည်။</p>
                     <div>
-                        <span class="text-xs font-bold text-slate-600">Auto Part Output (4 files / Part)</span>
-                        <p class="text-[10px] text-slate-400">Part တစ်ခုစီမှာ TTS + final script + SRT + final MP4 ထုတ်မည်။ အပေါ်က Auto Part Merge ကိုဖွင့်ထားရင် MP4 ကို တစ်ဖိုင်တည်း ပြန်ပေါင်းမည်။</p>
-                    </div>
-                    <input type="checkbox" id="cleanOutput" class="toggle-checkbox">
-                </div>
-            </div>
-        </div>
-
-        <div class="lg:w-1/3 space-y-6">
-            <div class="card p-6 space-y-6">
-                
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 relative">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="text-[11px] font-bold text-blue-800 uppercase"><i class="fa-solid fa-closed-captioning mr-1"></i> Subtitles Configuration</h4>
-                        <input type="checkbox" id="subToggle" class="toggle-checkbox" checked onchange="updateSubPreview()">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="text-[10px] font-bold text-slate-500 block mb-1">Select Font (Live Preview)</label>
-                        <select id="savedFonts" class="w-full border p-1.5 rounded text-xs" onchange="updateSubPreview()">
-                            <option value="">Default Font (Unicode)</option>
+                        <label class="text-[11px] font-bold text-slate-500 block mb-1">Sync Mode</label>
+                        <select id="syncMode" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="strict" selected>Strict Evidence Sync — loop မလုပ်၊ လိုအပ်လျှင် freeze-frame</option>
+                            <option value="balanced">Balanced — အနည်းငယ် stretch/freeze ခွင့်ပြု</option>
+                            <option value="legacy">Legacy — အရင် workflow (loop ခွင့်ပြု)</option>
                         </select>
                     </div>
-                    
-                    <button type="button" onclick="document.getElementById('fontUpload').click()" class="w-full bg-white border border-blue-200 py-1.5 rounded text-[10px] font-bold text-blue-600 hover:bg-blue-100 mb-3">
-                        <i class="fa-solid fa-upload"></i> Upload & Save New Font (.ttf)
-                    </button>
-                    <input type="file" id="fontUpload" class="hidden" accept=".ttf,.otf" onchange="uploadNewFont(this)">
-                    
-                    <div class="grid grid-cols-2 gap-3 mb-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="text-[10px] font-bold text-slate-500 block mb-1">Font Size</label>
-                            <input type="number" id="subSize" value="24" min="10" max="60" class="w-full border p-1 rounded text-xs text-center" oninput="updateSubPreview()">
+                            <label class="text-[11px] font-bold text-slate-500 block mb-1">Shortfall Fallback</label>
+                            <select id="fallbackPolicy" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="freeze" selected>Freeze frame (အကြောင်းအရာမပြောင်း)</option>
+                                <option value="loop">Loop source shot (legacy)</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-slate-500 block mb-1">Color</label>
-                            <select id="subColor" class="w-full border p-1 rounded text-xs" onchange="updateSubPreview()">
-                                <option value="Yellow">Yellow</option>
-                                <option value="White">White</option>
-                                <option value="Green">Green</option>
+                            <label class="text-[11px] font-bold text-slate-500 block mb-1">AI Usage Budget</label>
+                            <select id="aiBudget" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="local" selected>Local-first (quota အနည်းဆုံး)</option>
+                                <option value="balanced">Balanced (အကြံပြု)</option>
+                                <option value="quality">Quality (Gemini Video)</option>
                             </select>
                         </div>
                     </div>
-                    <div class="mb-2">
-                        <label class="text-[10px] font-bold text-slate-500 block mb-1">🌐 စာတန်း ဘာသာ (အသံနဲ့ ကွာခွင့်ရှိ — AI ဘာသာပြန်ပေးမယ်)</label>
-                        <select id="subLanguage" class="w-full border p-1.5 rounded text-xs">
-                            <option value="">အသံဘာသာအတိုင်း (Voice Language)</option>
-                            <option value="Burmese">မြန်မာ (Burmese)</option>
-                            <option value="English">English</option>
-                            <option value="Thai">ไทย (Thai)</option>
-                            <option value="Chinese Simplified">中文 (Chinese)</option>
-                            <option value="Japanese">日本語 (Japanese)</option>
-                            <option value="Korean">한국어 (Korean)</option>
-                            <option value="Hindi">हिन्दी (Hindi)</option>
-                            <option value="Spanish">Español (Spanish)</option>
-                            <option value="Indonesian">Indonesia</option>
-                            <option value="Vietnamese">Tiếng Việt</option>
-                            <option value="Arabic">العربية (Arabic)</option>
-                            <option value="French">Français (French)</option>
-                            <option value="Portuguese">Português</option>
-                            <option value="Turkish">Türkçe (Turkish)</option>
-                            <option value="Russian">Русский (Russian)</option>
-                            <option value="German">Deutsch (German)</option>
-                            <option value="Italian">Italiano (Italian)</option>
-                            <option value="Malay">Bahasa Melayu</option>
-                            <option value="Filipino">Filipino</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[10px] font-bold text-slate-500">
-                            <span>📍 Position (Bottom→Top)</span>
-                            <span id="subPosVal">20%</span>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label class="text-[11px] font-bold text-slate-500">Max natural audio speed-up</label>
+                            <span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-bold"><span id="maxStretchVal">1.00</span>x</span>
                         </div>
-                        <input type="range" id="subPosition" min="0" max="90" value="20" class="slider"
-                            oninput="document.getElementById('subPosVal').innerText=this.value+'%'; updateSubPreview();">
+                        <input type="range" id="maxAudioStretch" min="1.00" max="1.20" step="0.01" value="1.00" class="slider" oninput="document.getElementById('maxStretchVal').innerText=Number(this.value).toFixed(2)">
+                        <p class="text-[10px] text-slate-400 mt-1">1.12x ကျော်ရင် အသံမမြန်အောင် script/visual fallback သုံးပါမည်။</p>
                     </div>
+                    <div id="syncAdvice" class="bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-lg p-3 text-[11px]">Strict mode: source scene ကို ထပ်မပြဘဲ narration beat ကို တည်ငြိမ်စွာပြသပါမည်။</div>
                 </div>
 
-                <div>
-                    <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">AI Voice Engine & Preview</h4>
-                    <div class="flex bg-slate-100 p-1 rounded-lg mb-2">
-                        <button type="button" onclick="setVoiceType('new', this)" class="voice-btn flex-1 py-1.5 text-[10px] font-bold rounded-md text-slate-500">NEW (Gemini)</button>
-                        <button type="button" onclick="setVoiceType('edge', this)" class="voice-btn flex-1 py-1.5 text-[10px] font-bold rounded-md active-tab">EDGE TTS</button>
-                        <button type="button" onclick="setVoiceType('clone', this)" class="voice-btn flex-1 py-1.5 text-[10px] font-bold rounded-md text-slate-500">CLONE</button>
+                <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">⑤ Output &amp; Parting</div>
+                <div id="autoSplitCard" class="card p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase"><i class="fa-solid fa-scissors text-blue-500 mr-2"></i>Output Parting</h4>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-xs font-bold"><span id="splitVal">30</span> MIN/PART</span>
                     </div>
-                    <input type="hidden" id="voiceType" value="edge">
-                    <select id="voiceId" class="w-full border p-2.5 rounded-lg text-sm font-semibold mb-2"></select>
-                    
-                    <button type="button" id="previewVoiceBtn" onclick="playVoicePreview()" class="w-full bg-emerald-100 border border-emerald-300 py-2 rounded-lg text-xs font-bold text-emerald-700 hover:bg-emerald-200 transition-all flex justify-center items-center gap-2">
-                        <i class="fa-solid fa-volume-high"></i> အသံနမူနာ နားထောင်မည်
-                    </button>
+                    <p class="text-xs text-slate-400">ရှည်တဲ့ source ကို Part ခွဲပြီး ထုတ်မယ်။ အောက်က merge ကို ဖွင့်ရင် Part အားလုံးကို final MP4 တစ်ဖိုင်အဖြစ် ပြန်ပေါင်းမယ်။</p>
+                    <input type="range" id="splittingClips" min="5" max="50" value="30" class="slider" oninput="document.getElementById('splitVal').innerText=this.value">
+                    <label class="flex items-center justify-between gap-3 bg-blue-50 border border-blue-100 rounded-lg p-3 cursor-pointer">
+                        <span><b class="text-xs text-blue-800">Auto Part Merge</b><br><span class="text-[10px] text-blue-600">Part 1, 2, 3... ကို final MP4 တစ်ဖိုင်အဖြစ် ပေါင်းမယ်</span></span>
+                        <input type="checkbox" id="autoMergeToggle" class="toggle-checkbox" checked>
+                    </label>
                 </div>
-                
-                <div class="bg-slate-50 p-3 rounded-lg border">
-                    <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">HUMAN SYNC SETTINGS</h4>
-                    <div class="space-y-3">
-                        <div class="space-y-1"><div class="flex justify-between text-[11px] font-bold text-slate-500"><span>SPEED RATE (1.3–1.4 recommended)</span> <span id="rVal">1.3</span></div><input type="range" id="vRate" min="0.5" max="2.0" step="0.1" value="1.3" class="slider" oninput="document.getElementById('rVal').innerText=this.value"></div>
-                        <div class="space-y-1"><div class="flex justify-between text-[11px] font-bold text-slate-500"><span>PITCH</span> <span id="pVal">0</span></div><input type="range" id="vPitch" min="-20" max="20" step="1" value="0" class="slider" oninput="document.getElementById('pVal').innerText=this.value"></div>
-                    </div>
-                </div>
+            </div>
 
-                <div>
-                    <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">Target Language</h4>
-                    <select id="targetLang" class="w-full border p-2.5 rounded-lg text-sm font-semibold">
-                        <option value="Burmese">Burmese (မြန်မာ)</option>
-                        <option value="English">English</option>
-                        <option value="Thai">Thai</option>
-                    </select>
-                </div>
+            <div class="lg:col-span-1 space-y-5">
+                <div class="text-[10px] font-bold tracking-widest text-indigo-300 uppercase">Voice · Captions · Export</div>
+                <div class="card p-6 space-y-5">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 relative">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-[11px] font-bold text-blue-800 uppercase"><i class="fa-solid fa-closed-captioning mr-1"></i> Subtitles Configuration</h4>
+                            <input type="checkbox" id="subToggle" class="toggle-checkbox" checked onchange="updateSubPreview()">
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-[10px] font-bold text-slate-500 block mb-1">Select Font (Live Preview)</label>
+                            <select id="savedFonts" class="w-full border p-1.5 rounded text-xs" onchange="updateSubPreview()">
+                                <option value="">Default Font (Unicode)</option>
+                            </select>
+                        </div>
+                        <button type="button" onclick="document.getElementById('fontUpload').click()" class="w-full bg-white border border-blue-200 py-1.5 rounded text-[10px] font-bold text-blue-600 hover:bg-blue-100 mb-3">
+                            <i class="fa-solid fa-upload"></i> Upload &amp; Save New Font (.ttf)
+                        </button>
+                        <input type="file" id="fontUpload" class="hidden" accept=".ttf,.otf" onchange="uploadNewFont(this)">
+                        <div class="grid grid-cols-2 gap-3 mb-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 block mb-1">Font Size</label>
+                                <input type="number" id="subSize" value="24" min="10" max="60" class="w-full border p-1 rounded text-xs text-center" oninput="updateSubPreview()">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 block mb-1">Color</label>
+                                <select id="subColor" class="w-full border p-1 rounded text-xs" onchange="updateSubPreview()">
+                                    <option value="Yellow">Yellow</option>
+                                    <option value="White">White</option>
+                                    <option value="Green">Green</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-[10px] font-bold text-slate-500 block mb-1">🌐 စာတန်း ဘာသာ (အသံနဲ့ ကွာခွင့်ရှိ — AI ဘာသာပြန်ပေးမယ်)</label>
+                            <select id="subLanguage" class="w-full border p-1.5 rounded text-xs">
+                                <option value="">အသံဘာသာအတိုင်း (Voice Language)</option>
+                                <option value="Burmese">မြန်မာ (Burmese)</option>
+                                <option value="English">English</option>
+                                <option value="Thai">ไทย (Thai)</option>
+                                <option value="Chinese Simplified">中文 (Chinese)</option>
+                                <option value="Japanese">日本語 (Japanese)</option>
+                                <option value="Korean">한국어 (Korean)</option>
+                                <option value="Hindi">हिन्दी (Hindi)</option>
+                                <option value="Spanish">Español (Spanish)</option>
+                                <option value="Indonesian">Indonesia</option>
+                                <option value="Vietnamese">Tiếng Việt</option>
+                                <option value="Arabic">العربية (Arabic)</option>
+                                <option value="French">Français (French)</option>
+                                <option value="Portuguese">Português</option>
+                                <option value="Turkish">Türkçe (Turkish)</option>
+                                <option value="Russian">Русский (Russian)</option>
+                                <option value="German">Deutsch (German)</option>
+                                <option value="Italian">Italiano (Italian)</option>
+                                <option value="Malay">Bahasa Melayu</option>
+                                <option value="Filipino">Filipino</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] font-bold text-slate-500">
+                                <span>📍 Position (Bottom→Top)</span>
+                                <span id="subPosVal">20%</span>
+                            </div>
+                            <input type="range" id="subPosition" min="0" max="90" value="20" class="slider"
+                                oninput="document.getElementById('subPosVal').innerText=this.value+'%'; updateSubPreview();">
+                        </div>
+                    </div>
 
-                <div>
-                    <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase flex justify-between items-center">
-                        BRAND LOGO 
-                        <img id="logoPreview" class="h-6 w-auto object-contain rounded hidden" src="">
-                    </h4>
-                    <button type="button" onclick="document.getElementById('logoFile').click()" class="w-full bg-slate-100 border py-2 rounded-lg text-xs font-bold text-slate-600 mb-2">📁 UPLOAD LOGO IMAGE</button>
-                    <input type="file" id="logoFile" class="hidden" accept="image/png, image/jpeg" onchange="handleLogoSelect(this)">
-                    <div class="mb-2">
-                        <label class="text-[10px] font-bold text-slate-400 block mb-1">✏️ TEXT WATERMARK (optional)</label>
-                        <input type="text" id="logoText" placeholder="@YourChannel" class="w-full border p-1.5 rounded text-xs" maxlength="40">
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">Voice (Edge TTS) &amp; Preview</h4>
+                        <input type="hidden" id="voiceType" value="edge">
+                        <div class="flex bg-slate-100 p-1 rounded-lg mb-2">
+                            <button type="button" onclick="setVoiceType('edge', this)" class="voice-btn active-tab flex-1 py-1.5 text-[10px] font-bold rounded-md">EDGE TTS</button>
+                        </div>
+                        <select id="voiceId" class="w-full border p-2.5 rounded-lg text-sm font-semibold mb-2"></select>
+                        <button type="button" id="previewVoiceBtn" onclick="playVoicePreview()" class="w-full bg-emerald-100 border border-emerald-300 py-2 rounded-lg text-xs font-bold text-emerald-700 hover:bg-emerald-200 transition-all flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-volume-high"></i> အသံနမူနာ နားထောင်မည်
+                        </button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="setLogoPos('TOP LEFT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md active-tab">TOP LEFT</button>
-                        <button type="button" onclick="setLogoPos('TOP RIGHT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md">TOP RIGHT</button>
-                        <button type="button" onclick="setLogoPos('BOTTOM LEFT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md">BOTTOM LEFT</button>
-                        <button type="button" onclick="setLogoPos('BOTTOM RIGHT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md">BOTTOM RIGHT</button>
-                    </div>
-                    <input type="hidden" id="logoPosition" value="TOP LEFT">
-                </div>
 
-                <div>
-                    <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">Output Aspect Ratio</h4>
-                    <div class="grid grid-cols-3 gap-3 mb-3">
-                        <label class="cursor-pointer relative"><input type="radio" name="ratio" value="1:1" class="ratio-radio absolute opacity-0" onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">SQUARE</span></div></label>
-                        <label class="cursor-pointer relative"><input type="radio" name="ratio" value="16:9" class="ratio-radio absolute opacity-0" checked onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">YOUTUBE</span></div></label>
-                        <label class="cursor-pointer relative"><input type="radio" name="ratio" value="9:16" class="ratio-radio absolute opacity-0" onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">TIKTOK</span></div></label>
+                    <div class="bg-slate-50 p-3 rounded-lg border">
+                        <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">HUMAN SYNC SETTINGS</h4>
+                        <div class="space-y-3">
+                            <div class="space-y-1"><div class="flex justify-between text-[11px] font-bold text-slate-500"><span>SPEED RATE (1.3–1.4 recommended)</span> <span id="rVal">1.3</span></div><input type="range" id="vRate" min="0.5" max="2.0" step="0.1" value="1.3" class="slider" oninput="document.getElementById('rVal').innerText=this.value"></div>
+                            <div class="space-y-1"><div class="flex justify-between text-[11px] font-bold text-slate-500"><span>PITCH</span> <span id="pVal">0</span></div><input type="range" id="vPitch" min="-20" max="20" step="1" value="0" class="slider" oninput="document.getElementById('pVal').innerText=this.value"></div>
+                        </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Output Resolution</label>
-                        <select id="outputResolution" class="w-full border p-1.5 rounded text-xs font-semibold">
-                            <option value="1280:720">1280×720 (HD 720p)</option>
-                            <option value="1920:1080">1920×1080 (Full HD 1080p)</option>
-                            <option value="854:480">854×480 (SD 480p)</option>
-                            <option value="640:360">640×360 (360p)</option>
+
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">Target Language</h4>
+                        <select id="targetLang" class="w-full border p-2.5 rounded-lg text-sm font-semibold">
+                            <option value="Burmese">Burmese (မြန်မာ)</option>
+                            <option value="English">English</option>
+                            <option value="Thai">Thai</option>
                         </select>
                     </div>
-                </div>
 
-                <button onclick="startProcess()" id="startBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all text-sm uppercase" aria-label="Start Auto Recap">
-                    START AUTO RECAP
-                </button>
-                
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase flex justify-between items-center">
+                            BRAND LOGO
+                            <img id="logoPreview" class="h-6 w-auto object-contain rounded hidden" src="">
+                        </h4>
+                        <button type="button" onclick="document.getElementById('logoFile').click()" class="w-full bg-slate-100 border py-2 rounded-lg text-xs font-bold text-slate-600 mb-2">📁 UPLOAD LOGO IMAGE</button>
+                        <input type="file" id="logoFile" class="hidden" accept="image/png, image/jpeg" onchange="handleLogoSelect(this)">
+                        <div class="mb-2">
+                            <label class="text-[10px] font-bold text-slate-400 block mb-1">✏️ TEXT WATERMARK (optional)</label>
+                            <input type="text" id="logoText" placeholder="@YourChannel" class="w-full border p-1.5 rounded text-xs" maxlength="40">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="setLogoPos('TOP LEFT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md active-tab">TOP LEFT</button>
+                            <button type="button" onclick="setLogoPos('TOP RIGHT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md">TOP RIGHT</button>
+                            <button type="button" onclick="setLogoPos('BOTTOM LEFT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md">BOTTOM LEFT</button>
+                            <button type="button" onclick="setLogoPos('BOTTOM RIGHT', this)" class="logo-btn border py-1.5 text-[10px] font-bold rounded-md">BOTTOM RIGHT</button>
+                        </div>
+                        <input type="hidden" id="logoPosition" value="TOP LEFT">
+                    </div>
 
-                <div id="logBox" class="hidden bg-slate-800 text-blue-400 text-xs font-mono p-4 rounded-lg mt-4">
-                    <span id="logText">ပြင်ဆင်နေပါသည်...</span>
-                    <div id="syncQaPanel" class="hidden mt-3 rounded-lg bg-slate-900/80 border border-slate-700 p-3 font-sans text-[11px]">
-                        <div class="flex justify-between items-center"><b class="text-emerald-300">SYNC QA REPORT</b><span id="syncQaStatus" class="text-slate-400">စစ်ဆေးနေသည်...</span></div>
-                        <div id="syncQaDetails" class="text-slate-300 mt-2"></div>
+                    <div>
+                        <h4 class="text-[11px] font-bold text-slate-400 mb-2 uppercase">Output Aspect Ratio</h4>
+                        <div class="grid grid-cols-3 gap-3 mb-3">
+                            <label class="cursor-pointer relative"><input type="radio" name="ratio" value="1:1" class="ratio-radio absolute opacity-0" onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">SQUARE</span></div></label>
+                            <label class="cursor-pointer relative"><input type="radio" name="ratio" value="16:9" class="ratio-radio absolute opacity-0" checked onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">YOUTUBE</span></div></label>
+                            <label class="cursor-pointer relative"><input type="radio" name="ratio" value="9:16" class="ratio-radio absolute opacity-0" onchange="updateOutputResolutionForRatio()"><div class="aspect-square border flex flex-col items-center justify-center rounded-lg p-2"><span class="text-[10px] font-bold text-slate-700">TIKTOK</span></div></label>
+                        </div>
+                        <div class="mt-3">
+                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Output Resolution</label>
+                            <select id="outputResolution" class="w-full border p-1.5 rounded text-xs font-semibold">
+                                <option value="1280:720">1280×720 (HD 720p)</option>
+                                <option value="1920:1080">1920×1080 (Full HD 1080p)</option>
+                                <option value="854:480">854×480 (SD 480p)</option>
+                                <option value="640:360">640×360 (360p)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="startProcess()" id="startBtn" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all text-sm uppercase" aria-label="Start Auto Recap">
+                        🚀 START AUTO RECAP
+                    </button>
+
+                    <div id="logBox" class="hidden bg-slate-800 text-blue-400 text-xs font-mono p-4 rounded-lg mt-2">
+                        <span id="logText">ပြင်ဆင်နေပါသည်...</span>
+                        <div id="syncQaPanel" class="hidden mt-3 rounded-lg bg-slate-900/80 border border-slate-700 p-3 font-sans text-[11px]">
+                            <div class="flex justify-between items-center"><b class="text-emerald-300">SYNC QA REPORT</b><span id="syncQaStatus" class="text-slate-400">စစ်ဆေးနေသည်...</span></div>
+                            <div id="syncQaDetails" class="text-slate-300 mt-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Live Preview Panel -->
+                    <div id="livePreview" class="hidden bg-black rounded-xl overflow-hidden border border-slate-200">
+                        <div class="bg-slate-900 px-3 py-2 flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-white uppercase"><i class="fa-solid fa-eye mr-1"></i>Live Preview</span>
+                            <span id="previewScene" class="text-[10px] text-blue-400">Scene 0/0</span>
+                        </div>
+                        <div class="relative">
+                            <img id="previewFrame" src="" class="w-full object-contain bg-black" style="max-height:200px">
+                            <div id="previewStep" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 text-[10px] text-white"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Live Preview Panel -->
-                <div id="livePreview" class="hidden mt-4 bg-black rounded-xl overflow-hidden border border-slate-200">
-                    <div class="bg-slate-900 px-3 py-2 flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-white uppercase"><i class="fa-solid fa-eye mr-1"></i>Live Preview</span>
-                        <span id="previewScene" class="text-[10px] text-blue-400">Scene 0/0</span>
-                    </div>
-                    <div class="relative">
-                        <img id="previewFrame" src="" class="w-full object-contain bg-black" style="max-height:200px">
-                        <div id="previewStep" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 py-2 text-[10px] text-white"></div>
-                    </div>
+                <div id="completedFiles" class="card p-6 space-y-4 hidden border-2 border-green-400">
+                    <h3 class="font-bold text-lg text-green-600"><i class="fa-solid fa-check-circle"></i> Download Files</h3>
+                    <div id="fileList" class="space-y-3"></div>
                 </div>
             </div>
-
-            <div id="completedFiles" class="card p-6 space-y-4 hidden border-2 border-green-400">
-                <h3 class="font-bold text-lg text-green-600"><i class="fa-solid fa-check-circle"></i> Download Files</h3>
-                <div id="fileList" class="space-y-3"></div>
-            </div>
-
-        </div>
         </div>
     </section>
 
@@ -1501,7 +1465,7 @@ select option { background: #0e1730; color: #eef2ff; }
         }
 
         window.onload = () => { 
-            setVoiceType('edge', document.querySelector('.voice-btn.active-tab')); 
+            setVoiceType('edge', document.querySelector('.voice-btn.active-tab')); mrsUpdateChoices(); 
             fetchCompletedFiles(); 
             fetchFonts();
             fetchPastJobs();
@@ -1869,10 +1833,10 @@ select option { background: #0e1730; color: #eef2ff; }
             fd.append('ai_budget', document.getElementById('aiBudget').value);
             fd.append('max_audio_stretch', document.getElementById('maxAudioStretch').value);
             fd.append('min_beat_sec', document.getElementById('minBeatSec').value);
-            fd.append('make_shorts', document.getElementById('makeShortsToggle').checked);
-            fd.append('num_shorts', document.getElementById('numShorts').value);
-            fd.append('make_teaser', document.getElementById('makeTeaserToggle').checked);
-            fd.append('num_flashes', document.getElementById('numFlashes').value);
+            fd.append('make_shorts', !!document.getElementById('makeShortsToggle')?.checked);
+            fd.append('num_shorts', document.getElementById('numShorts')?.value ?? '3');
+            fd.append('make_teaser', !!document.getElementById('makeTeaserToggle')?.checked);
+            fd.append('num_flashes', document.getElementById('numFlashes')?.value ?? '6');
             fd.append('split_count', document.getElementById('splittingClips').value);
             fd.append('merge_parts', effectiveAnalysisEngine === 'gemini_auto' && document.getElementById('autoMergeToggle')?.checked ? 'true' : 'false');
             fd.append('continue_from_id', document.getElementById('continueFromId').value);
@@ -4077,7 +4041,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             const voiceType = document.getElementById('voiceType');
             if (voiceType) voiceType.value = 'edge';
             const voiceId = document.getElementById('voiceId');
-            if (voiceId && !voiceId.value) setVoiceType('edge', document.querySelector('.voice-btn.active-tab'));
+            if (voiceId && !voiceId.value) setVoiceType('edge', document.querySelector('.voice-btn.active-tab')); mrsUpdateChoices();
         }
 
         function applyRecapPreset(kind) {
@@ -4233,6 +4197,36 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             if (btn) { btn.disabled = false; btn.classList.remove('opacity-50'); }
             mrsLoadIndexList();
         }
+
+        // ===== Live "Your Choices" summary =====
+        function mrsChoiceChip(label, value) {
+            return `<span class="inline-flex items-center gap-2 rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1"><b class="text-indigo-200/80 font-semibold">${label}</b><span class="text-white font-bold">${value}</span></span>`;
+        }
+        function mrsSelText(id) {
+            const el = document.getElementById(id); if (!el) return '—';
+            if (el.tagName === 'SELECT' && el.selectedIndex >= 0 && el.options[el.selectedIndex]) return el.options[el.selectedIndex].textContent.trim();
+            return el.value || '—';
+        }
+        function mrsUpdateChoices() {
+            const box = document.getElementById('mrsChoices'); if (!box) return;
+            const ratioEl = document.querySelector('input[name=ratio]:checked');
+            const items = [
+                ['Preset',  mrsSelText('recapPreset').split('—')[0].trim()],
+                ['Style',   mrsSelText('recapStyle').split('—')[0].replace(/^★\s*/, '').trim()],
+                ['Length',  (document.getElementById('recapRatioVal')?.innerText || '50') + '%'],
+                ['Ratio',   ratioEl ? ratioEl.value : '16:9'],
+                ['Res',     (document.getElementById('outputResolution')?.value || '1280:720').replace(':', '×')],
+                ['Engine',  document.getElementById('analysisEngine')?.value || 'ranked_local_v2'],
+                ['Voice',   mrsSelText('voiceId').replace(/^\[[^\]]*\]\s*/, '')],
+                ['Lang',    document.getElementById('targetLang')?.value || 'Burmese'],
+                ['Caption', document.getElementById('subToggle')?.checked ? 'On' : 'Off'],
+                ['Fair-use', mrsSelText('mrsFairUsePreset')],
+                ['Sync',    document.getElementById('syncMode')?.value || 'strict'],
+                ['Parts',   document.getElementById('autoMergeToggle')?.checked ? 'Merge' : 'Separate'],
+            ];
+            box.innerHTML = items.map(([k, v]) => mrsChoiceChip(k, v)).join('');
+        }
+        ['change', 'input'].forEach(function (ev) { document.addEventListener(ev, mrsUpdateChoices); });
 
         // Movie Finder init
         switchTab('studio');
