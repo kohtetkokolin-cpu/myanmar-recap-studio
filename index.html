@@ -278,18 +278,6 @@ select option { background: #0e1730; color: #eef2ff; }
                     <button type="button" id="manualToolTab" onclick="switchRecapTool('manual')" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">🛠 Manual Review</button>
                     <button type="button" id="storyToolTab" onclick="switchRecapTool('story')" class="text-left rounded-xl border-2 px-3 py-2 text-xs font-bold">📚 Story Studio</button>
                 </div>
-                <div class="card p-4 mb-4 border-l-4 border-amber-500">
-                    <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
-                        <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i>Fair-use Transform</h3>
-                        <span class="text-[10px] text-slate-400">transform ကို Auto toggles + Designer ဆီ ချိတ်ပေးမယ် (ဥပဒေအာမခံ မဟုတ်)</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-end">
-                        <label class="text-[11px] font-bold text-slate-500">Transform preset
-                            <select id="mrsFairUsePreset" class="w-full mt-1 border rounded p-2 text-xs font-normal" onchange="mrsApplyFairUse(this.value)"></select>
-                        </label>
-                        <div id="mrsFairUseHelp" class="text-[10px] text-slate-400 pb-2"></div>
-                    </div>
-                </div>
             </div>
 
             <!-- Step 3 · Configure & Run -->
@@ -319,6 +307,25 @@ select option { background: #0e1730; color: #eef2ff; }
                         <label class="text-[11px] font-bold text-slate-500">Sub size<input type="number" id="uSubSize" value="24" min="10" max="80" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub color<select id="uSubColor" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option>Yellow</option><option>White</option><option>Green</option><option>Cyan</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub position %<input type="number" id="uSubPos" value="20" min="0" max="95" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
+                    </div>
+                </div>
+                <div class="card p-4 mb-4 border-l-4 border-amber-500">
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                        <div class="text-[11px] font-bold tracking-widest text-amber-300 uppercase"><i class="fa-solid fa-shield-halved mr-1"></i>Fair-use Transform</div>
+                        <span class="text-[10px] text-slate-400">transform ကို Auto + Dialogue + Designer ဆီ အလိုအလျောက် ချိတ်ပေးမယ် (ဥပဒေအာမခံ မဟုတ်)</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 items-end mb-3">
+                        <label class="text-[11px] font-bold text-slate-500">Transform preset
+                            <select id="mrsFairUsePreset" class="w-full mt-1 border rounded p-2 text-xs font-normal" onchange="mrsApplyFairUse(this.value)"></select>
+                        </label>
+                        <div id="mrsFairUseHelp" class="text-[10px] text-slate-400 pb-2"></div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold">Mirror<input type="checkbox" id="uMirror" class="toggle-checkbox" onchange="mrsApplyUnified()"></label>
+                        <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold">Color<input type="checkbox" id="uColor" class="toggle-checkbox" onchange="mrsApplyUnified()"></label>
+                        <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold">Rotation<input type="checkbox" id="uRotation" class="toggle-checkbox" onchange="mrsApplyUnified()"></label>
+                        <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold">Noise<input type="checkbox" id="uNoise" class="toggle-checkbox" onchange="mrsApplyUnified()"></label>
+                        <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold">Blur<input type="checkbox" id="uBlur" class="toggle-checkbox" onchange="mrsApplyUnified()"></label>
                     </div>
                 </div>
             </div>
@@ -721,7 +728,7 @@ select option { background: #0e1730; color: #eef2ff; }
                     </div>
                 </div>
 
-                <div class="card p-5 space-y-4 border-l-4 border-yellow-400">
+                <div id="autoFairUseBlock" class="card p-5 space-y-4 border-l-4 border-yellow-400">
                     <h4 class="text-sm font-bold text-slate-700 uppercase flex items-center"><i class="fa-solid fa-shield-halved text-yellow-500 mr-2"></i>Fair-use Transform (Auto)</h4>
                     <p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded p-2">အပေါ်က Fair-use preset က ဒီ toggle တွေကို ချိန်ပေးပါမယ်။ ဤအရာများသည် transformation aids သာဖြစ်ပြီး copyright အာမခံ မဟုတ်ပါ။</p>
                     <div class="grid grid-cols-2 gap-4">
@@ -3148,7 +3155,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             try { mrsUpdateChoices(); } catch (e) {}
         }
         function uHideDuplicates() {
-            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes'].forEach(function (id) {
+            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 const lbl = el.closest('label');
@@ -3187,6 +3194,28 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             mrsLoadIndexList();
         }
 
+        function mrsApplyUnified() {
+            const m = document.getElementById('uMirror')?.checked;
+            const c = document.getElementById('uColor')?.checked;
+            const r = document.getElementById('uRotation')?.checked;
+            const n = document.getElementById('uNoise')?.checked;
+            const b = document.getElementById('uBlur')?.checked;
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+            set('bypassMirror', m); set('bypassColor', c); set('bypassRotation', r); set('bypassNoise', n); set('blurMasterToggle', b);
+            set('dialogueMirror', m); set('dialogueColor', c); set('dialogueRotation', r); set('dialogueNoise', n); set('dialogueBlur', b);
+            try {
+                if (typeof FX === 'object' && FX) {
+                    FX.mirror = m ? 'all' : 'off';
+                    FX.color = !!c;
+                    FX.rotation = !!r;
+                    FX.noise = n ? 3 : 0;
+                    if (typeof fxToUi === 'function') fxToUi();
+                }
+            } catch (e) {}
+            try { updateBlurPreview(); } catch (e) {}
+            try { mrsUpdateChoices(); } catch (e) {}
+        }
+
         function mrsApplyFairUse(name) {
             const help = document.getElementById('mrsFairUseHelp');
             const p = MRS_PRESETS.find(x => x.name === name);
@@ -3203,13 +3232,14 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
                     if (typeof fxToUi === 'function') fxToUi();
                 }
             } catch (e) {}
-            // Map the same preset onto the Auto transformation toggles
+            // Map the same preset onto every mode's transformation toggles
             try {
                 const set = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
-                set('bypassMirror', fx.mirror && fx.mirror !== 'off');
-                set('bypassColor', !!fx.color);
-                set('bypassRotation', !!fx.rotation);
-                set('bypassNoise', (fx.noise || 0) > 0);
+                const mir = fx.mirror && fx.mirror !== 'off';
+                const col = !!fx.color, rot = !!fx.rotation, noi = (fx.noise || 0) > 0;
+                set('bypassMirror', mir); set('bypassColor', col); set('bypassRotation', rot); set('bypassNoise', noi);
+                set('dialogueMirror', mir); set('dialogueColor', col); set('dialogueRotation', rot); set('dialogueNoise', noi);
+                set('uMirror', mir); set('uColor', col); set('uRotation', rot); set('uNoise', noi);
             } catch (e) {}
         }
 
