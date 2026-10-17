@@ -304,6 +304,8 @@ select option { background: #0e1730; color: #eef2ff; }
                         <label class="text-[11px] font-bold text-slate-500">Resolution<select id="uRes" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option value="1280:720">1280×720</option><option value="1920:1080">1920×1080</option><option value="854:480">854×480</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Subtitle language<select id="uLang" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option value="">အသံဘာသာအတိုင်း</option><option value="Burmese">မြန်မာ</option><option value="English">English</option><option value="Thai">ไทย</option><option value="Chinese Simplified">中文</option><option value="Japanese">日本語</option><option value="Korean">한국어</option><option value="Hindi">हिन्दी</option><option value="Spanish">Español</option><option value="Indonesian">Indonesia</option><option value="Vietnamese">Tiếng Việt</option><option value="Arabic">العربية</option><option value="French">Français</option><option value="Russian">Русский</option></select></label>
                         <label class="text-[11px] font-bold text-slate-500">Narrator voice<select id="uVoice" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushVoice()"><option value="">—</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500">Male character<select id="uMaleVoice" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushVoice()"><option value="">—</option></select></label>
+                        <label class="text-[11px] font-bold text-slate-500">Female character<select id="uFemaleVoice" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPushVoice()"><option value="">—</option></select></label>
                         <label class="flex items-center justify-between bg-slate-50 border rounded p-2 text-[11px] font-bold mt-4">Subtitles<input type="checkbox" id="uSubs" class="toggle-checkbox" checked onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub size<input type="number" id="uSubSize" value="24" min="10" max="80" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"></label>
                         <label class="text-[11px] font-bold text-slate-500">Sub color<select id="uSubColor" class="w-full mt-1 border rounded p-2 text-xs" onchange="uPush()"><option>Yellow</option><option>White</option><option>Green</option><option>Cyan</option></select></label>
@@ -3161,22 +3163,32 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             uSetSafe('dialogueNarratorVoice', v);
             uSetSafe('ssNarrator', v);
             uSetSafe('pjNarrator', v);
+            const m = document.getElementById('uMaleVoice')?.value;
+            const f = document.getElementById('uFemaleVoice')?.value;
+            if (m) { uSetSafe('dialogueMaleVoice', m); uSetSafe('ssMale', m); uSetSafe('pjMale', m); }
+            if (f) { uSetSafe('dialogueFemaleVoice', f); uSetSafe('ssFemale', f); uSetSafe('pjFemale', f); }
             try { mrsUpdateChoices(); } catch (e) {}
         }
         async function uLoadVoices() {
             try {
                 const pr = await (await fetch('/api/edge_voice_profiles')).json();
                 const profiles = (pr && pr.profiles) || [];
-                const sel = document.getElementById('uVoice'); if (!sel || !profiles.length) return;
-                const prev = sel.value;
-                sel.innerHTML = profiles.map(p => `<option value="${esc(p.id)}">${esc(p.label || p.id)}</option>`).join('');
-                if (profiles.some(p => p.id === prev)) sel.value = prev;
+                const opt = profiles.map(p => `<option value="${esc(p.id)}">${esc(p.label || p.id)}</option>`).join('');
+                ['uVoice', 'uMaleVoice', 'uFemaleVoice'].forEach(function (id) {
+                    const sel = document.getElementById(id); if (!sel || !profiles.length) return;
+                    const prev = sel.value;
+                    sel.innerHTML = opt;
+                    if (profiles.some(p => p.id === prev)) sel.value = prev;
+                });
+                const mm = document.getElementById('uMaleVoice'), ff = document.getElementById('uFemaleVoice');
+                if (mm && !mm.value && profiles.some(p => p.id === 'male_calm')) mm.value = 'male_calm';
+                if (ff && !ff.value && profiles.some(p => p.id === 'female_soft')) ff.value = 'female_soft';
                 uPushVoice();
             } catch (e) {}
         }
 
         function uHideDuplicates() {
-            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur'].forEach(function (id) {
+            ['dialogueAspectRatio', 'dialogueResolution', 'dialogueSubs', 'dialogueSubColor', 'dialogueFont', 'dialogueSubSize', 'dialogueSubPosition', 'ssAspect', 'ssRes', 'ssSubMode', 'ssSubSize', 'ssSubColor', 'pjAspect', 'pjRes', 'autoFairUseBlock', 'dialogueMirror', 'dialogueColor', 'dialogueNoise', 'dialogueRotation', 'dialogueBlur', 'dialogueMaleVoice', 'dialogueFemaleVoice', 'ssMale', 'ssFemale', 'pjMale', 'pjFemale'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 const lbl = el.closest('label');
