@@ -242,13 +242,25 @@ select option { background: #0e1730; color: #eef2ff; }
 
             <!-- Step 1 · Source & Analyze Once -->
             <div id="wzStep1" class="wz-step">
+                <div class="card p-4 mb-4 border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                        <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-2"></i>Source Video</h3>
+                        <span class="text-[10px] text-slate-400">ဖိုင်တစ်ခုတည်း ရွေးလိုက်ရင် Auto / Dialogue / Manual / Story အားလုံးဆီ အလိုအလျောက် ရောက်ပါမယ်</span>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-2 items-center">
+                        <label class="flex-1 w-full bg-slate-50 border-2 border-dashed border-slate-300 rounded-lg py-3 px-3 text-slate-500 font-semibold text-xs cursor-pointer hover:bg-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-file-video text-lg"></i><span id="wzSourceName">VIDEO ဖိုင် ရွေးပါ (Max: 1GB)</span>
+                            <input id="wzSourceFile" type="file" accept="video/*" class="hidden" onchange="mrsSourcePicked(this)">
+                        </label>
+                        <span id="wzSourceChip" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-700 text-slate-300">No file</span>
+                    </div>
+                </div>
                 <div class="card p-4 mb-4 border-l-4 border-teal-500">
                     <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
                         <h3 class="font-black text-sm text-slate-800"><i class="fa-solid fa-magnifying-glass-chart text-teal-400 mr-2"></i>Source &amp; Analyze Once</h3>
                         <span id="mrsIndexStatus" class="text-[10px] text-slate-400">source ကို တစ်ခါ index လုပ်ထားရင် နောက် run တွေမှာ Whisper/scene-detect ကျော်ပါမယ်</span>
                     </div>
                     <div class="flex flex-col md:flex-row gap-2">
-                        <input id="mrsIndexFile" type="file" accept="video/*" class="flex-1 text-xs bg-white border rounded p-2">
                         <button type="button" id="mrsIndexBuildBtn" onclick="mrsBuildIndex()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg font-bold text-xs whitespace-nowrap"><i class="fa-solid fa-bolt mr-1"></i>Analyze Once</button>
                         <button type="button" onclick="mrsLoadIndexList()" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg text-xs font-bold" title="Index list ပြန်ဆွဲ"><i class="fa-solid fa-rotate"></i></button>
                     </div>
@@ -3068,6 +3080,7 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
                 const s = document.getElementById(id); if (!s) return;
                 s.classList.toggle('hidden', !(showSections && id === active));
             });
+            if (n === 3) { try { mrsInjectSource(); } catch (e) {} }
             const title = document.getElementById('wzTitle');
             const titles = { 1: 'Step 1 · Source & Analyze Once', 2: 'Step 2 · Output Format', 3: 'Step 3 · Configure & Run' };
             if (title) title.textContent = titles[n] || '';
@@ -3084,6 +3097,37 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
         }
 
         let MRS_PRESETS = [];
+
+        function mrsSourcePicked(input) {
+            const f = input && input.files && input.files[0];
+            if (!f) return;
+            window.MRS_SOURCE_FILE = f;
+            const nm = document.getElementById('wzSourceName'); if (nm) nm.textContent = f.name;
+            const chip = document.getElementById('wzSourceChip');
+            if (chip) { chip.textContent = (f.size / 1048576).toFixed(1) + ' MB'; chip.className = 'text-[10px] font-bold px-2 py-1 rounded bg-emerald-600 text-white'; }
+            mrsInjectSource();
+        }
+        function mrsModeVideoInputs() {
+            const m = window.MRS_MODE || 'auto';
+            if (m === 'dialogue') return ['dialogueVideoFile'];
+            if (m === 'manual') return ['manualVideo'];
+            if (m === 'story') return ['ssVideoFile', 'pjFile'];
+            return ['videoFile'];
+        }
+        function mrsInjectSource() {
+            const f = window.MRS_SOURCE_FILE;
+            if (!f) return;
+            mrsModeVideoInputs().forEach(function (id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(f);
+                    el.files = dt.files;
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch (e) {}
+            });
+        }
 
         async function mrsLoadSystem() {
             // HW encoder status chip (read-only; enable with MRS_HW_ENCODE=1 on the server)
@@ -3166,9 +3210,10 @@ let manualState = {jobId:null, manifest:null, videoUrl:null, audioUrl:null, curr
             const inp = document.getElementById('mrsIndexFile');
             const btn = document.getElementById('mrsIndexBuildBtn');
             const st = document.getElementById('mrsIndexStatus');
-            if (!inp || !inp.files[0]) { alert('Analyze Once အတွက် video ဖိုင်ကို အရင်ရွေးပါ။'); return; }
+            const file = (window.MRS_SOURCE_FILE) || (inp && inp.files && inp.files[0]);
+            if (!file) { alert('Analyze Once အတွက် VIDEO ဖိုင်ကို အရင်ရွေးပါ။'); mrsWzGo(1); return; }
             const fd = new FormData();
-            fd.append('video_file', inp.files[0]);
+            fd.append('video_file', file);
             fd.append('detail', 'local');
             if (btn) { btn.disabled = true; btn.classList.add('opacity-50'); }
             if (st) st.textContent = 'Analyze စတင်နေပါသည် (Whisper + scene-detect)...';
