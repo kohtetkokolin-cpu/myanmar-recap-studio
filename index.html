@@ -1847,6 +1847,7 @@ select option { background: #0e1730; color: #eef2ff; }
         const CAT_LABELS = { ai_movie: 'AI', china_drama: 'တရုတ်', animation: 'Animation', movie: 'Movie' };
 
         function switchTab(tab) { return; } /* legacy nav removed */
+        let _toastTimer = null;
         function toast(msg, ms) {
             if (!msg) return;
             let el = document.getElementById('__toast');
